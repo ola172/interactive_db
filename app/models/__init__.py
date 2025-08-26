@@ -1,5 +1,5 @@
 from app.models.book import BookVideoDetail, BookReadingDetail, BookSection
-from app.models.course import CourseDetail, CourseInstructor, Chapter, Video
+from app.models.course import CourseDetail, CourseInstructor, Chapter, Video, CourseCategory
 from app.models.instructor import Instructor, InstructorSkill
 from app.models.pathway import Pathway, PathwayItem
 from app.models.product import ProductType, Product
@@ -34,5 +34,6 @@ __all__ = [
     "UserAnswer",
     "UserWaitingList",
     "ProductRating",
+    "CourseCategory",
 
 ]

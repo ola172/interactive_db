@@ -1,54 +1,21 @@
-from typing import Any, AsyncGenerator
-
-from fastapi import FastAPI, Depends
-from sqlalchemy.ext.asyncio import AsyncSession
+from fastapi import FastAPI
 
 from app.core.database import Database
-from app.repositories.product import ProductRepository, ProductTypeRepository
-from app.schemas.product import ProductCreate, ProductTypeCreate
+from app.routers.Instructor_routes import instructor_router
+from app.routers.course_routes import course_router
+from app.routers.product_routes import product_router
 
+app = FastAPI(title="Zedny API")
+
+# Include routers
+app.include_router(product_router)
+app.include_router(course_router)
+app.include_router(instructor_router)
+# Initialize DB
 db = Database()
 
-app = FastAPI()
 
-
-# ---------- Startup event to create tables ----------
 @app.on_event("startup")
 async def on_startup():
+    """Create tables if they don't exist"""
     await db.create_tables()
-
-
-# ---------- Dependency ----------
-async def get_db_session() -> AsyncGenerator[AsyncSession, Any]:
-    async for session in db.get_session():
-        yield session
-
-
-# ---------- Product Types ----------
-@app.get("/types")
-async def read_types(session: AsyncSession = Depends(get_db_session)):
-    repo = ProductTypeRepository(session)
-    types = await repo.get_all()
-    return [t.__dict__ for t in types]
-
-
-@app.post("/types")
-async def create_type(type_data: ProductTypeCreate, session: AsyncSession = Depends(get_db_session)):
-    repo = ProductTypeRepository(session)
-    new_type = await repo.create(type_data.model_dump())
-    return {"message": "Type created", "type": new_type.__dict__}
-
-
-# ---------- Products ----------
-@app.get("/products")
-async def read_products(session: AsyncSession = Depends(get_db_session)):
-    repo = ProductRepository(session)
-    products = await repo.get_all()
-    return [p.__dict__ for p in products]
-
-
-@app.post("/products")
-async def create_product(product: ProductCreate, session: AsyncSession = Depends(get_db_session)):
-    repo = ProductRepository(session)
-    new_product = await repo.create(product.model_dump())
-    return {"message": "Product created", "product": new_product.__dict__}

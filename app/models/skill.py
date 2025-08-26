@@ -1,12 +1,23 @@
+import uuid
+
 from sqlalchemy import Column, Integer, String, Text, ForeignKey, UniqueConstraint
+from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
+
 from app.core.database import Base
 
 
 class Skill(Base):
     __tablename__ = "skills"
 
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(
+        UUID(as_uuid=True),
+        primary_key=True,
+        default=uuid.uuid4,
+        unique=True,
+        nullable=False,
+        index=True
+    )
     name = Column(String(255), unique=True, nullable=False)
     description = Column(Text)
 
@@ -17,9 +28,16 @@ class Skill(Base):
 class ProductSkill(Base):
     __tablename__ = "product_skills"
 
-    id = Column(Integer, primary_key=True, index=True)
-    product_id = Column(Integer, ForeignKey("products.id"))
-    skill_id = Column(Integer, ForeignKey("skills.id"))
+    id = Column(
+        UUID(as_uuid=True),
+        primary_key=True,
+        default=uuid.uuid4,
+        unique=True,
+        nullable=False,
+        index=True
+    )
+    product_id = Column(UUID(as_uuid=True), ForeignKey("products.id"))
+    skill_id = Column(UUID(as_uuid=True), ForeignKey("skills.id"))
 
     __table_args__ = (UniqueConstraint("product_id", "skill_id", name="uq_product_skill"),)
 

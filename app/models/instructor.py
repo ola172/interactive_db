@@ -1,12 +1,23 @@
+import uuid
+
 from sqlalchemy import Column, Integer, String, Text, Boolean, ForeignKey, DECIMAL
+from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
+
 from app.core.database import Base
 
 
 class Instructor(Base):
     __tablename__ = "instructors"
 
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(
+        UUID(as_uuid=True),
+        primary_key=True,
+        default=uuid.uuid4,
+        unique=True,
+        nullable=False,
+        index=True
+    )
     name = Column(String(255), nullable=False)
     title = Column(String(255))
     bio = Column(Text)
@@ -32,9 +43,16 @@ class Instructor(Base):
 class InstructorSkill(Base):
     __tablename__ = "instructor_skills"
 
-    id = Column(Integer, primary_key=True, index=True)
-    instructor_id = Column(Integer, ForeignKey("instructors.id"))
-    skill_id = Column(Integer, ForeignKey("skills.id"))
+    id = Column(
+        UUID(as_uuid=True),
+        primary_key=True,
+        default=uuid.uuid4,
+        unique=True,
+        nullable=False,
+        index=True
+    )
+    instructor_id = Column(UUID(as_uuid=True), ForeignKey("instructors.id"))
+    skill_id = Column(UUID(as_uuid=True), ForeignKey("skills.id"))
 
     instructor = relationship("Instructor", back_populates="skills")
     skill = relationship("Skill", back_populates="instructors")

@@ -1,13 +1,24 @@
+import uuid
+
 from sqlalchemy import Column, Integer, String, Text, ForeignKey, Boolean
+from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
+
 from app.core.database import Base
 
 
 class BookVideoDetail(Base):
     __tablename__ = "book_video_details"
 
-    id = Column(Integer, primary_key=True, index=True)
-    product_id = Column(Integer, ForeignKey("products.id"), unique=True)
+    id = Column(
+        UUID(as_uuid=True),
+        primary_key=True,
+        default=uuid.uuid4,
+        unique=True,
+        nullable=False,
+        index=True
+    )
+    product_id = Column(UUID(as_uuid=True), ForeignKey("products.id"), unique=True)
     author_name = Column(String(255))
     total_videos = Column(Integer)
     total_hours = Column(Integer)
@@ -19,8 +30,15 @@ class BookVideoDetail(Base):
 class BookReadingDetail(Base):
     __tablename__ = "book_reading_details"
 
-    id = Column(Integer, primary_key=True, index=True)
-    product_id = Column(Integer, ForeignKey("products.id"), unique=True)
+    id = Column(
+        UUID(as_uuid=True),
+        primary_key=True,
+        default=uuid.uuid4,
+        unique=True,
+        nullable=False,
+        index=True
+    )
+    product_id = Column(UUID(as_uuid=True), ForeignKey("products.id"), unique=True)
     author_name = Column(String(255))
     author_bio = Column(Text)
     page_count = Column(Integer)
@@ -35,8 +53,15 @@ class BookReadingDetail(Base):
 class BookSection(Base):
     __tablename__ = "book_sections"
 
-    id = Column(Integer, primary_key=True, index=True)
-    book_id = Column(Integer, ForeignKey("book_reading_details.id"))
+    id = Column(
+        UUID(as_uuid=True),
+        primary_key=True,
+        default=uuid.uuid4,
+        unique=True,
+        nullable=False,
+        index=True
+    )
+    book_id = Column(UUID(as_uuid=True), ForeignKey("book_reading_details.id"))
     title = Column(String(255))
     content = Column(Text)
     stage_index = Column(Integer)

@@ -1,15 +1,26 @@
-from sqlalchemy import Column, Integer, Text, ForeignKey, DateTime, UniqueConstraint
-from sqlalchemy.orm import relationship
+import uuid
 from datetime import datetime
+
+from sqlalchemy import Column, Integer, Text, ForeignKey, DateTime, UniqueConstraint
+from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.orm import relationship
+
 from app.core.database import Base
 
 
 class ProductRating(Base):
     __tablename__ = "product_ratings"
 
-    id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id"))
-    product_id = Column(Integer, ForeignKey("products.id"))
+    id = Column(
+        UUID(as_uuid=True),
+        primary_key=True,
+        default=uuid.uuid4,
+        unique=True,
+        nullable=False,
+        index=True
+    )
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"))
+    product_id = Column(UUID(as_uuid=True), ForeignKey("products.id"))
     rating = Column(Integer)
     review = Column(Text)
     created_at = Column(DateTime, default=datetime.utcnow)
