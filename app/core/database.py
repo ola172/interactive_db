@@ -1,21 +1,48 @@
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, declarative_base, Session
+from typing import AsyncGenerator, Optional
+from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
+from sqlalchemy.orm import declarative_base
 from app.config import settings
 
 DATABASE_URL = settings.DATABASE_URL
 
 Base = declarative_base()
 
+
 class Database:
-    def __init__(self, url: str = None):
-        # use the Pydantic URL, but cast to str
-        self.engine = create_engine(str(url or settings.DATABASE_URL), echo=True, future=True)
-        self.SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=self.engine)
+    def __init__(self, url: Optional[str] = None):
+        # Create async engine
+        self.engine = create_async_engine(
+            str(url or DATABASE_URL),
+            echo=True,
+            future=True,
+            pool_pre_ping=True,
+        )
+        # Async session factory
+        self.SessionLocal = async_sessionmaker(
+            bind=self.engine,
+            class_=AsyncSession,
+            expire_on_commit=False,
+            autoflush=False,
+            autocommit=False,
+        )
 
-    def create_tables(self):
-        """Create all tables"""
-        Base.metadata.create_all(bind=self.engine)
+    async def create_tables(self) -> None:
+        """Create all tables asynchronously"""
+        async with self.engine.begin() as conn:
+            await conn.run_sync(Base.metadata.create_all)
 
-    def get_session(self) -> Session:
-        """Dependency for FastAPI or manual use"""
-        return self.SessionLocal()
+    async def drop_tables(self) -> None:
+        """Drop all tables asynchronously"""
+        async with self.engine.begin() as conn:
+            await conn.run_sync(Base.metadata.drop_all)
+
+    async def get_session(self) -> AsyncGenerator[AsyncSession, None]:
+        """Async DB session generator for FastAPI or manual use"""
+        async with self.SessionLocal() as session:
+            try:
+                yield session
+            except Exception:
+                await session.rollback()
+                raise
+            finally:
+                await session.close()
