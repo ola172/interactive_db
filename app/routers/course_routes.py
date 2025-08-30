@@ -2,7 +2,7 @@ import uuid
 from fastapi import APIRouter, Depends, Query
 
 from app.container import get_course_service
-from app.schemas.course import CreateCourse, CourseCategoryBase
+from app.schemas.course import CourseDetailSchema
 from app.services import CourseService
 
 course_router = APIRouter(prefix="/courses", tags=["Courses"])
@@ -10,7 +10,7 @@ course_router = APIRouter(prefix="/courses", tags=["Courses"])
 
 @course_router.post("")
 async def create_course(
-    course_request: CreateCourse,
+    course_request: CourseDetailSchema,
     course_service: CourseService = Depends(get_course_service)
 ):
     """
@@ -34,28 +34,21 @@ async def get_course_by_product(
 async def get_all_courses(
     page: int = Query(1, ge=1),
     limit: int = Query(10, ge=1, le=100),
+    category_id: uuid.UUID | None = None,
     course_service: CourseService = Depends(get_course_service)
 ):
     """
     Get all courses with optional pagination.
     """
-    return await course_service.get_all_courses(page=page, limit=limit)
+    return await course_service.get_all_courses(page=page, limit=limit, category_id=category_id)
 
-@course_router.get("/category")
-async def get_all_course_categories(
-    page: int = Query(1, ge=1),
-    limit: int = Query(10, ge=1, le=100),
+
+@course_router.delete("/{product_id}")
+async def delete_course(
+    product_id: uuid.UUID,
     course_service: CourseService = Depends(get_course_service)
 ):
     """
-    Get all course categories with optional pagination.
+    Delete a course by its ID.
     """
-    return await course_service.get_all_course_categories(page=page, limit=limit)
-
-@course_router.post("/categoryone")
-async def create_course_category(
-    category_request: CourseCategoryBase,
-    course_service: CourseService = Depends(get_course_service)
-):
-    return await course_service.create_course_category(category_request)
-
+    return await course_service.delete_course_product(product_id=product_id)

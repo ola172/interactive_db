@@ -1,8 +1,14 @@
+import uuid
 from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
+from typing import Sequence
 
-from app.repositories import ProductRepository, ProductTypeRepository
-from app.schemas.product import ProductTypeCreate
+from app.models import ProductCategory
+from app.repositories import (ProductRepository, ProductTypeRepository, ProductCategoryRepository,
+                              ProductRatingRepository,
+                              SkillRepository, ObjectiveRepository)
+from app.schemas.product import ProductTypeCreate, ProductCategoryBase
+from app.schemas.skills_objectives import SkillObjectiveSchema
 from app.services.course_service import CourseService
 
 
@@ -12,12 +18,46 @@ class ProductService:
         db: AsyncSession,
         product_repository: ProductRepository,
         product_type_repository: ProductTypeRepository,
+        product_category_repo: ProductCategoryRepository,
+        skill_repository: SkillRepository,
+        objective_repository: ObjectiveRepository,
+        product_rating_repository: ProductRatingRepository,
         course_service: CourseService
     ):
         self.db = db
         self.product_repository = product_repository
         self.product_type_repository = product_type_repository
         self.course_service = course_service
+        self.product_category_repo = product_category_repo
+        self.skill_repository = skill_repository
+        self.objective_repository = objective_repository
+        self.product_rating_repository = product_rating_repository
+
+    async def create_skill(self, skill_data: SkillObjectiveSchema):
+        """
+        Create a new skill within a transaction.
+        """
+        async with self.db.begin():
+            return await self.skill_repository.create(skill_data.model_dump())
+
+    async def create_objective(self, objective_data: SkillObjectiveSchema):
+        """
+        Create a new objective within a transaction.
+        """
+        async with self.db.begin():
+            return await self.objective_repository.create(objective_data.model_dump())
+
+    async def get_all_skills(self) -> Sequence:
+        """
+        Fetch all skills.
+        """
+        return await self.skill_repository.get_all()
+
+    async def get_all_objectives(self) -> Sequence:
+        """
+        Fetch all objectives.
+        """
+        return await self.objective_repository.get_all()
 
     async def get_all_product_types(self):
         """
@@ -60,3 +100,40 @@ class ProductService:
             product_type_id
         )
         return {"product_type": product_type, "products": products}
+
+
+    async def get_all_course_categories(
+        self, page: int = 1, limit: int = 10
+    ) -> Sequence[ProductCategory]:
+        """
+        Fetch all course categories with optional pagination.
+        """
+        return await self.product_category_repo.get_all(page=page, limit=limit)
+
+    async def create_product_category(
+        self, product_category: ProductCategoryBase
+    ) -> ProductCategory:
+        """
+        Create a new course category.
+        Only fields defined in the model are used.
+        """
+        category_data = {
+            "name": product_category.name,
+            "description": product_category.description
+        }
+        async with self.db.begin():
+            category = await self.product_category_repo.create(category_data)
+        return category
+
+    async def get_all_product_categories(self) -> Sequence[ProductCategory]:
+        """
+        Fetch all product categories without pagination.
+        """
+        return await self.product_category_repo.get_all()
+
+
+    async def get_product_rating(self, product_id: uuid.UUID) -> float | None:
+        """
+        Get the average rating for a product.
+        """
+        return await self.product_rating_repository.get_product_rating(product_id)

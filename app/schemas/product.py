@@ -1,5 +1,9 @@
 from pydantic import BaseModel
 
+class ProductCategoryBase(BaseModel):
+    name: str
+    description: str
+
 class ProductTypeCreate(BaseModel):
     name: str
 

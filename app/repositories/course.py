@@ -5,13 +5,15 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from app.models import Product
-from app.models.course import CourseDetail, Chapter, Video, CourseCategory
+from app.models import Product, ProductSkill
+from app.models.course import CourseDetail, Chapter, Video, CourseInstructor
+from app.models.skill_objective import ProductObjective
 from app.repositories.base_repo import BaseRepository
 
 
+
 class CourseDetailRepository(BaseRepository[CourseDetail]):
-    def __init__(self, db: AsyncSession):
+    def __init__(self, db: AsyncSession, ):
         super().__init__(CourseDetail, db)
 
     async def get_by_product_id_(self, product_id: UUID) -> CourseDetail | None:
@@ -24,27 +26,54 @@ class CourseDetailRepository(BaseRepository[CourseDetail]):
             select(Product)
             .where(Product.id == product_id)
             .options(
+                # load course → instructors → instructor details
                 selectinload(Product.course_detail)
-                .selectinload(CourseDetail.chapters)
-                .selectinload(Chapter.videos)
+                .selectinload(CourseDetail.instructors)
+                .selectinload(CourseInstructor.instructor),
+
+                # load skills (via ProductSkill → Skill)
+                selectinload(Product.product_skills).selectinload(ProductSkill.skill),
+
+                # load objectives (via ProductObjective → Objective)
+                selectinload(Product.product_objectives).selectinload(ProductObjective.objective),
             )
         )
         result = await self.db.execute(stmt)
         return result.scalars().first()
 
+    from typing import Sequence, Optional
+    from uuid import UUID
+
     async def get_all_course_product(
-            self, page: int = 1, limit: int = 10
+            self,
+            page: int = 1,
+            limit: int = 10,
+            category_id: Optional[UUID] = None,
     ) -> Sequence[CourseDetail]:
         stmt = (
             select(CourseDetail)
             .options(
-                selectinload(CourseDetail.product),
+                # Load product and its relationships
+                selectinload(CourseDetail.product)
+                .selectinload(Product.product_skills)
+                .selectinload(ProductSkill.skill),
+
+                selectinload(CourseDetail.product)
+                .selectinload(Product.product_objectives)
+                .selectinload(ProductObjective.objective),
+
+                # Chapters → Videos
                 selectinload(CourseDetail.chapters)
-                .selectinload(Chapter.videos)
+                .selectinload(Chapter.videos),
             )
             .offset((page - 1) * limit)
             .limit(limit)
         )
+
+        # ✅ add filter dynamically if category_id is provided
+        if category_id:
+            stmt = stmt.where(CourseDetail.product.has(Product.category_id == category_id))
+
         result = await self.db.execute(stmt)
         return result.scalars().all()
 
@@ -57,7 +86,7 @@ class ChapterRepository(BaseRepository[Chapter]):
         stmt = (
             select(Chapter)
             .where(Chapter.course_id == course_id)
-            .order_by(Chapter.order_index.asc())
+            .order_by(Chapter.view_index.asc())
         )
         result = await self.db.execute(stmt)
         return result.scalars().all()
@@ -71,11 +100,7 @@ class VideoRepository(BaseRepository[Video]):
         stmt = (
             select(Video)
             .where(Video.chapter_id == chapter_id)
-            .order_by(Video.order_index.asc())
+            .order_by(Video.view_index.asc())
         )
         result = await self.db.execute(stmt)
         return result.scalars().all()
-
-class CourseCategoryRepository(BaseRepository[CourseCategory]):
-    def __init__(self, db: AsyncSession):
-        super().__init__(CourseCategory, db)

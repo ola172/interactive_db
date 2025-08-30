@@ -1,17 +1,18 @@
-from .rating import ProductRatingRepository
-from .book import BookSectionRepository, BookVideoRepository, BookReadingRepository, BookVideoDetail, \
-    BaseRepository
-from .course import CourseDetailRepository, VideoRepository, ChapterRepository, CourseCategoryRepository
+from .book import BookSectionRepository, BookVideoDetailsRepository, BookReadingRepository, BookVideoDetail, \
+    BaseRepository, BookVideosRepository
+from .course import CourseDetailRepository, VideoRepository, ChapterRepository
 from .instructor import InstructorRepository, InstructorSkillRepository, CourseInstructorRepository
 from .pathway import PathwayRepository, PathwayItemRepository
-from .product import ProductRepository, ProductTypeRepository
+from .product import ProductRepository, ProductTypeRepository, ProductCategoryRepository
 from .quiz import QuizRepository, AnswerRepository, QuizQuestionRepository, QuestionRepository
-from .skill import SkillRepository
+from .rating import ProductRatingRepository
+from .skill import SkillRepository, ObjectiveRepository, ProductObjectiveRepository, ProductSkillRepository
 from .user import UserRepository
 
 __all__ = [
     "BookSectionRepository",
-    "BookVideoRepository",
+    "BookVideoDetailsRepository",
+    "BookVideosRepository",
     "BookVideoDetail",
     "BookReadingRepository",
     "BaseRepository",
@@ -31,7 +32,10 @@ __all__ = [
     "QuestionRepository",
     "ProductRatingRepository",
     "SkillRepository",
+    "ObjectiveRepository",
     "UserRepository",
-    "CourseCategoryRepository",
+    "ProductCategoryRepository",
+    "ProductObjectiveRepository",
+    "ProductSkillRepository",
 
 ]
