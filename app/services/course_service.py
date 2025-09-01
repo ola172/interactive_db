@@ -1,5 +1,5 @@
 import uuid
-from typing import Sequence, Optional
+from typing import Sequence, Optional, Any, Coroutine
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -126,7 +126,7 @@ class CourseService:
 
     async def get_all_courses(
             self, page: int = 1, limit: int = 10, category_id: Optional[uuid.UUID] = None,
-    ) -> Sequence[CourseDetail]:
+    ) -> list[dict[str, Any]]:
         """
         Fetch all courses with optional pagination.
         """

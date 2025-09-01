@@ -1,9 +1,11 @@
 import uuid
+from typing import Optional
 
 from sqlalchemy.future import select
 from sqlalchemy.orm import selectinload
 
 from app.models import User, UserProduct, UserWaitingList, ProductRating
+from app.models.user import EnrollmentStatus
 from app.repositories.user import UserRepository, UserProductRepository, UserWaitingListRepository
 from app.schemas.user_schema import UserCreate, UserProductSchema, UserWaitingListSchema
 
@@ -28,16 +30,39 @@ class UserService:
         return user.id
 
     async def enroll_user_to_product(self, user_id: uuid.UUID, product: UserProductSchema):
+        """
+        Enroll a user to a product (course/book/pathway) or update existing enrollment.
+        """
         async with self.db.begin():
-            return await self.user_product_repo.create({
-                "user_id": user_id,
-                "product_id": product.product_id,
-                "progress": product.progress,
-                "status": product.status,
-                "is_like": product.is_like
-            })
+            stmt = select(UserProduct).where(
+                UserProduct.user_id == user_id,
+                UserProduct.product_id == product.product_id
+            )
+            result = await self.db.execute(stmt)
+            enrollment = result.scalar_one_or_none()
+
+            if enrollment:
+                # Update existing enrollment
+                enrollment.progress = product.progress
+                enrollment.status = product.status
+                enrollment.is_like = product.is_like
+                await self.db.flush()
+                return enrollment
+            else:
+                # Create new enrollment
+                new_enrollment = await self.user_product_repo.create({
+                    "user_id": user_id,
+                    "product_id": product.product_id,
+                    "progress": product.progress,
+                    "status": product.status or EnrollmentStatus.in_progress,
+                    "is_like": product.is_like
+                })
+                return new_enrollment
 
     async def add_to_waiting_list(self, user_id: uuid.UUID, product: UserWaitingListSchema):
+        """
+        Add a user to a product's waiting list.
+        """
         async with self.db.begin():
             return await self.waiting_repo.create({
                 "user_id": user_id,
@@ -46,6 +71,9 @@ class UserService:
             })
 
     async def get_user_with_enrollments(self, user_id: uuid.UUID):
+        """
+        Return user info along with all enrolled products and waiting list items.
+        """
         stmt = (
             select(User)
             .where(User.id == user_id)
@@ -58,15 +86,12 @@ class UserService:
         return result.scalar_one_or_none()
 
     async def get_all_users(self):
-        stmt = select(User)
-        result = await self.db.execute(stmt)
-        return result.scalars().all()
+        return await self.user_repo.get_all()
 
     async def get_product_status_for_user(self, user_id: uuid.UUID, product_id: uuid.UUID):
         """
         Return enrollment and waiting status for a specific product for a user.
         """
-        # check enrollment
         enrollment_stmt = (
             select(UserProduct)
             .where(UserProduct.user_id == user_id, UserProduct.product_id == product_id)
@@ -74,7 +99,6 @@ class UserService:
         enrollment_result = await self.db.execute(enrollment_stmt)
         enrollment = enrollment_result.scalar_one_or_none()
 
-        # check waiting list
         waiting_stmt = (
             select(UserWaitingList)
             .where(UserWaitingList.user_id == user_id, UserWaitingList.product_id == product_id)
@@ -99,23 +123,22 @@ class UserService:
         Remove a user from waiting list for a specific product.
         """
         async with self.db.begin():
-            waiting_stmt = (
+            stmt = (
                 select(UserWaitingList)
                 .where(UserWaitingList.user_id == user_id, UserWaitingList.product_id == product_id)
             )
-            result = await self.db.execute(waiting_stmt)
+            result = await self.db.execute(stmt)
             waiting_entry = result.scalar_one_or_none()
             if waiting_entry:
                 await self.waiting_repo.delete(waiting_entry.id)
             return waiting_entry
 
     async def add_or_update_product_rating(self, user_id: uuid.UUID, product_id: uuid.UUID, rating: int,
-                                           review: str = None):
+                                           review: Optional[str] = None):
         """
         Add or update a user's rating and review for a product.
         """
         async with self.db.begin():
-            # Check if rating exists
             stmt = select(ProductRating).where(
                 ProductRating.user_id == user_id,
                 ProductRating.product_id == product_id
@@ -124,13 +147,11 @@ class UserService:
             existing = result.scalar_one_or_none()
 
             if existing:
-                # Update existing rating
                 existing.rating = rating
                 existing.review = review
                 await self.db.flush()
                 return existing
             else:
-                # Create new rating
                 new_rating = ProductRating(
                     user_id=user_id,
                     product_id=product_id,

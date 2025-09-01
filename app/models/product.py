@@ -1,12 +1,15 @@
 # app/models/product.py
 import uuid
 from datetime import datetime
-
+from sqlalchemy.ext.hybrid import hybrid_property
+from sqlalchemy import func, select
 from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey, DECIMAL
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
+from sqlalchemy.sql import expression
 
 from app.core.database import Base
+from app.models.rating import ProductRating
 
 
 class ProductType(Base):
@@ -78,7 +81,7 @@ class Product(Base):
     pathway = relationship("Pathway", back_populates="product", uselist=False)
 
     # user-related relationships
-    ratings = relationship("ProductRating", back_populates="product")
+    ratings = relationship("ProductRating", back_populates="product", cascade="all, delete-orphan")
     waiting_list = relationship("UserWaitingList", back_populates="product")
     enrollments = relationship("UserProduct", back_populates="product")
 
@@ -91,3 +94,17 @@ class Product(Base):
     objectives = relationship("Objective", secondary="product_objectives", viewonly=True)
 
 
+    @hybrid_property
+    def average_rating(self):
+        if not self.ratings:
+            return 0.0
+        return sum(r.rating for r in self.ratings) / len(self.ratings)
+
+    @average_rating.expression
+    def average_rating(cls) -> expression.ColumnElement[float]:  # 👈 type hint
+        return (
+            select(func.coalesce(func.avg(ProductRating.rating), 0.0))
+            .where(ProductRating.product_id == cls.id)
+            .correlate_except(ProductRating)
+            .scalar_subquery()
+        )

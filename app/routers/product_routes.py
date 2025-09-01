@@ -78,12 +78,14 @@ async def get_all_products_by_type(
     product_type_id: UUID,
     page: int = Query(1, ge=1),
     limit: int = Query(10, ge=1, le=100),
+    category_id: UUID | None = None,
     product_service: ProductService = Depends(get_product_service)
 ):
     return await product_service.get_all_products_by_type(
         product_type_id=product_type_id,
         page=page,
-        limit=limit
+        limit=limit,
+        category_id=category_id
     )
 
 @product_router.get("/{product_id}/rating")

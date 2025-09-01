@@ -80,7 +80,7 @@ class ProductService:
             return await self.product_type_repository.create(product_request.model_dump())
 
     async def get_all_products_by_type(
-        self, product_type_id: UUID, page: int = 1, limit: int = 10
+        self, product_type_id: UUID, page: int = 1, limit: int = 10, category_id: UUID | None = None
     ):
         """
         Fetch products by type, supporting pagination.
@@ -92,7 +92,8 @@ class ProductService:
             return {"product_type": None, "products": []}
 
         if product_type.name.lower() == "course":
-            courses = await self.course_service.get_all_courses(page=page, limit=limit)
+            courses = await self.course_service.get_all_courses(page=page, limit=limit,
+                                                                category_id=category_id)
             return {"product_type": product_type, "products": courses}
 
         # For non-course products, use repository with pagination
@@ -100,6 +101,12 @@ class ProductService:
             product_type_id
         )
         return {"product_type": product_type, "products": products}
+
+    async def get_product_by_id(self, product_id: uuid.UUID):
+        """
+        Fetch a product by its ID.
+        """
+        return await self.product_repository.get(product_id)
 
 
     async def get_all_course_categories(

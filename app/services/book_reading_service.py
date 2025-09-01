@@ -109,16 +109,4 @@ class BookService:
         """
         Fetch one book with product details, sections, skills, and objectives by product_id.
         """
-        stmt = (
-            select(BookReadingDetail)
-            .join(Product)
-            .where(Product.id == product_id)
-            .options(
-                selectinload(BookReadingDetail.product),
-                selectinload(BookReadingDetail.sections),
-                selectinload(BookReadingDetail.product).selectinload(Product.skills),
-                selectinload(BookReadingDetail.product).selectinload(Product.objectives),
-            )
-        )
-        result = await self.db.execute(stmt)
-        return result.scalars().first()
+        return await self.book_reading_repo.get_book_with_sections(product_id)

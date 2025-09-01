@@ -174,13 +174,20 @@ async def get_user_service(
                       user_product_repo=user_product_repo,
                       waiting_repo=waiting_repo)
 
+
 async def get_pathway_service(
         pathway_repo: PathwayRepository = Depends(get_pathway_repository),
         pathway_item_repo: PathwayItemRepository = Depends(get_pathway_item_repository),
+        product_repo: ProductRepository = Depends(get_product_repository),
+        product_skill_repo: ProductSkillRepository = Depends(get_product_skill_repository),
+        product_objective_repo: ProductObjectiveRepository = Depends(get_product_objective_repository),
 ) -> AsyncGenerator["PathwayService", Any]:
     yield PathwayService(db=pathway_repo.db,
                          pathway_repo=pathway_repo,
-                         pathway_item_repo=pathway_item_repo)
+                         pathway_item_repo=pathway_item_repo,
+                         product_repo=product_repo,
+                         skill_repository=product_skill_repo,
+                         objective_repository=product_objective_repo, )
 
 
 async def get_course_service(

@@ -1,4 +1,4 @@
-from typing import Sequence, Optional
+from typing import Sequence, Optional, Any, Coroutine
 from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -16,13 +16,14 @@ class BookVideoDetailsRepository(BaseRepository[BookVideoDetail]):
 
     async def get_all_with_details(
             self, page: int = 1, limit: int = 10, category_id: Optional[UUID] = None
-    ) -> Sequence[BookVideoDetail]:
+    ) -> list[dict[str, Any]]:
         """
-        Fetch all BookVideoDetail records with related Product, Videos, skills, and objectives.
+        Fetch all BookVideoDetail records with related Product, Videos, skills, objectives, and average rating.
         Optionally filter by product category_id.
         """
         stmt = (
-            select(BookVideoDetail)
+            select(BookVideoDetail, Product.average_rating.label("average_rating"))
+            .join(BookVideoDetail.product)
             .options(
                 selectinload(BookVideoDetail.product).selectinload(Product.skills),
                 selectinload(BookVideoDetail.product).selectinload(Product.objectives),
@@ -30,32 +31,48 @@ class BookVideoDetailsRepository(BaseRepository[BookVideoDetail]):
             )
         )
 
-        # ✅ Add dynamic filter if category_id is provided
         if category_id:
             stmt = stmt.where(BookVideoDetail.product.has(Product.category_id == category_id))
 
         stmt = stmt.offset((page - 1) * limit).limit(limit)
         result = await self.db.execute(stmt)
-        return result.scalars().all()
+        rows = result.all()
 
-    async def get_by_product_id_with_details(self, product_id: UUID) -> Optional[BookVideoDetail]:
+        return [
+            {
+                "book_video": row.BookVideoDetail,
+                "average_rating": row.average_rating
+            }
+            for row in rows
+        ]
+
+    async def get_by_product_id_with_details(
+            self, product_id: UUID
+    ) -> Optional[dict[str, Any]]:
         """
-        Fetch a single BookVideoDetail by product_id with related Product, Videos, skills, and objectives.
+        Fetch a single BookVideoDetail by product_id with related Product, Videos, skills, objectives, and average rating.
         """
         stmt = (
-            select(BookVideoDetail)
-            .join(Product)
-            .where(Product.id == product_id)
+            select(BookVideoDetail, Product.average_rating.label("average_rating"))
+            .join(BookVideoDetail.product)
+            .where(BookVideoDetail.product_id == product_id)
             .options(
-                selectinload(BookVideoDetail.product)
-                .selectinload(Product.skills),
-                selectinload(BookVideoDetail.product)
-                .selectinload(Product.objectives),
+                selectinload(BookVideoDetail.product).selectinload(Product.skills),
+                selectinload(BookVideoDetail.product).selectinload(Product.objectives),
                 selectinload(BookVideoDetail.videos),
             )
         )
+
         result = await self.db.execute(stmt)
-        return result.scalars().first()
+        row = result.one_or_none()
+
+        if not row:
+            return None
+
+        return {
+            "book_video": row.BookVideoDetail,
+            "average_rating": row.average_rating
+        }
 
 
 class BookVideosRepository(BaseRepository[BookVideos]):
@@ -67,33 +84,55 @@ class BookReadingRepository(BaseRepository[BookReadingDetail]):
     def __init__(self, db: AsyncSession):
         super().__init__(BookReadingDetail, db)
 
-    async def get_book_with_sections(self, book_id: UUID) -> BookReadingDetail:
+    async def get_book_with_sections(self, product_id: UUID) -> dict[str, Any] | None:
+        """
+        Fetch a single BookReadingDetail by product_id with its sections,
+        product details, skills, objectives, and average rating.
+        """
         stmt = (
-            select(BookReadingDetail)
-            .where(BookReadingDetail.id == book_id)
-            .options(
-                selectinload(BookReadingDetail.sections)
+            select(
+                BookReadingDetail,
+                Product.average_rating.label("average_rating")
             )
+            .join(BookReadingDetail.product)  # join with Product
+            .options(
+                selectinload(BookReadingDetail.product).selectinload(Product.skills),
+                selectinload(BookReadingDetail.product).selectinload(Product.objectives),
+                selectinload(BookReadingDetail.sections),
+            )
+            .where(BookReadingDetail.product_id == product_id)
         )
 
         result = await self.db.execute(stmt)
-        book = result.scalar_one_or_none()
+        row = result.one_or_none()
 
-        if book:
-            # Ensure sections are ordered
-            book.sections.sort(key=lambda s: s.stage_index)
+        if not row:
+            return None
 
-        return book
+        book = row.BookReadingDetail
+        average_rating = row.average_rating
+
+        # Ensure sections are ordered
+        book.sections.sort(key=lambda s: s.stage_index)
+
+        return {
+            "book_reading": book,
+            "average_rating": average_rating
+        }
 
     async def get_all_with_details(
             self, page: int = 1, limit: int = 10, category_id: Optional[UUID] = None
-    ) -> Sequence[BookReadingDetail]:
+    ) -> list[dict[str, Any]]:
         """
         Fetch all BookReadingDetail records with related Product, Sections, skills, and objectives.
         Optionally filter by product category_id.
         """
         stmt = (
-            select(BookReadingDetail)
+            select(
+                BookReadingDetail,
+                Product.average_rating.label("average_rating")
+            )
+            .join(BookReadingDetail.product)
             .options(
                 selectinload(BookReadingDetail.product).selectinload(Product.skills),
                 selectinload(BookReadingDetail.product).selectinload(Product.objectives),
@@ -101,13 +140,20 @@ class BookReadingRepository(BaseRepository[BookReadingDetail]):
             )
         )
 
-        # ✅ Add dynamic filter if category_id is provided
         if category_id:
             stmt = stmt.where(BookReadingDetail.product.has(Product.category_id == category_id))
 
         stmt = stmt.offset((page - 1) * limit).limit(limit)
         result = await self.db.execute(stmt)
-        return result.scalars().unique().all()
+        rows = result.all()
+
+        return [
+            {
+                "book_reading": row.BookReadingDetail,
+                "average_rating": row.average_rating
+            }
+            for row in rows
+        ]
 
 
 class BookSectionRepository(BaseRepository[BookSection]):

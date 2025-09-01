@@ -18,6 +18,11 @@ class ProductRepository(BaseRepository[Product]):
         result = await self.db.execute(stmt)
         return result.scalars().all()
 
+    async def get_all_products_by_category(self, category_id: UUID) -> Sequence[Product]:
+        stmt = select(Product).filter(Product.category_id == category_id)
+        result = await self.db.execute(stmt)
+        return result.scalars().all()
+
 
 class ProductTypeRepository(BaseRepository[ProductType]):
     def __init__(self, db: AsyncSession):

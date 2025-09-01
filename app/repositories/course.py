@@ -1,15 +1,14 @@
-from typing import Sequence
+from typing import Sequence, Any, Coroutine
 from uuid import UUID
 
-from sqlalchemy import select
+from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from app.models import Product, ProductSkill
+from app.models import Product, ProductSkill, ProductRating
 from app.models.course import CourseDetail, Chapter, Video, CourseInstructor
 from app.models.skill_objective import ProductObjective
 from app.repositories.base_repo import BaseRepository
-
 
 
 class CourseDetailRepository(BaseRepository[CourseDetail]):
@@ -41,19 +40,19 @@ class CourseDetailRepository(BaseRepository[CourseDetail]):
         result = await self.db.execute(stmt)
         return result.scalars().first()
 
-    from typing import Sequence, Optional
-    from uuid import UUID
-
     async def get_all_course_product(
             self,
             page: int = 1,
             limit: int = 10,
-            category_id: Optional[UUID] = None,
-    ) -> Sequence[CourseDetail]:
+            category_id: UUID | None = None,
+    ) -> list[dict[str, Any]]:
         stmt = (
-            select(CourseDetail)
+            select(
+                CourseDetail,
+                Product.average_rating.label("average_rating")  # 👈 select hybrid_property
+            )
+            .join(CourseDetail.product)
             .options(
-                # Load product and its relationships
                 selectinload(CourseDetail.product)
                 .selectinload(Product.product_skills)
                 .selectinload(ProductSkill.skill),
@@ -62,20 +61,27 @@ class CourseDetailRepository(BaseRepository[CourseDetail]):
                 .selectinload(Product.product_objectives)
                 .selectinload(ProductObjective.objective),
 
-                # Chapters → Videos
                 selectinload(CourseDetail.chapters)
                 .selectinload(Chapter.videos),
             )
+            .order_by(Product.average_rating.desc())
             .offset((page - 1) * limit)
             .limit(limit)
         )
 
-        # ✅ add filter dynamically if category_id is provided
         if category_id:
             stmt = stmt.where(CourseDetail.product.has(Product.category_id == category_id))
 
         result = await self.db.execute(stmt)
-        return result.scalars().all()
+        rows = result.all()
+
+        return [
+            {
+                "course": row.CourseDetail,
+                "average_rating": row.average_rating
+            }
+            for row in rows
+        ]
 
 
 class ChapterRepository(BaseRepository[Chapter]):

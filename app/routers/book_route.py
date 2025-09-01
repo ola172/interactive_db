@@ -12,12 +12,13 @@ from app.services.book_video_service import BookVideoService
 book_router = APIRouter(prefix="/books", tags=["books"])
 
 
-@book_router.post("/reading", response_model=uuid.UUID)
+@book_router.post("/reading")
 async def create_book(
         book_request: BookCreate,
         book_service: BookService = Depends(get_book_service)
 ):
-    return await book_service.create_book_reading_product(book_request)
+    book_reading_id = await book_service.create_book_reading_product(book_request)
+    return {"book_reading_id": book_reading_id}
 
 
 @book_router.get("/reading/all")
@@ -29,11 +30,12 @@ async def get_all_books(
         book_service: BookService = Depends(get_book_service)
 ):
     """
+    Get all reading books with optional pagination and category filtering.
     """
     return await book_service.get_all_reading_books(page=page, limit=limit, category_id=category_id)
 
 
-@book_router.get("/{product_id}")
+@book_router.get("/reading/{product_id}")
 async def get_book_by_id(
         product_id: uuid.UUID,
         book_service: BookService = Depends(get_book_service)
@@ -46,7 +48,8 @@ async def create_video_book(
         video_book_request: BookVideoCreate,
         book_video_service: BookVideoService = Depends(get_book_video_service)
 ):
-    return await book_video_service.create_book_video_product(video_book_request)
+    book_video_id = await book_video_service.create_book_video_product(video_book_request)
+    return {"book_video_id": book_video_id}
 
 
 @book_router.get("/video/all")

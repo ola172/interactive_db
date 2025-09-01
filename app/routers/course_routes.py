@@ -16,18 +16,8 @@ async def create_course(
     """
     Create a new course product with chapters and videos.
     """
-    return await course_service.create_course_product(course_request)
-
-
-@course_router.get("/product/{product_id}")
-async def get_course_by_product(
-    product_id: uuid.UUID,
-    course_service: CourseService = Depends(get_course_service)
-):
-    """
-    Get a course by its product ID, including chapters and videos.
-    """
-    return await course_service.get_course_product(product_id=product_id)
+    course_id = await course_service.create_course_product(course_request)
+    return {"course_id": course_id}
 
 
 @course_router.get("/all")
