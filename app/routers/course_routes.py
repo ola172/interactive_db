@@ -32,6 +32,16 @@ async def get_all_courses(
     """
     return await course_service.get_all_courses(page=page, limit=limit, category_id=category_id)
 
+@course_router.get("/{product_id}")
+async def get_course_by_id(
+    product_id: uuid.UUID,
+    course_service: CourseService = Depends(get_course_service)
+):
+    """
+    Get a course by its product ID.
+    """
+    return await course_service.get_course_product(product_id=product_id)
+
 
 @course_router.delete("/{product_id}")
 async def delete_course(
