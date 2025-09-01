@@ -41,7 +41,10 @@ class BookVideoService:
                     "title": video_data.title,
                     "description": video_data.description,
                     "language": video_data.language,
-                    "level": video_data.level,
+                    "cover": video_data.cover,
+                    "created_by": video_data.created_by,
+                    "short_video": video_data.short_video,
+                    "level_id": video_data.level_id,
                     "duration": video_data.duration,
                 }
             )
@@ -51,11 +54,6 @@ class BookVideoService:
                 {
                     "product_id": product.id,
                     "author_name": video_data.author_name,
-                    "cover_path": video_data.cover_path,
-                    "price": video_data.price,
-                    "total_videos": video_data.total_videos,
-                    "total_hours": video_data.total_hours,
-                    "url": video_data.url,
                     "expected_time_completion": video_data.expected_time_completion,
                 }
             )

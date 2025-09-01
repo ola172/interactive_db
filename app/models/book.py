@@ -14,11 +14,6 @@ class BookVideoDetail(Base):
     product_id = Column(UUID(as_uuid=True), ForeignKey("products.id"), unique=True)
 
     author_name = Column(String(255))
-    cover_path = Column(String(255))
-    price = Column(DECIMAL(10, 2))
-    total_videos = Column(Integer)
-    total_hours = Column(Integer)
-    url = Column(String(255))
     expected_time_completion = Column(Integer, nullable=True)
 
     # Relationships
@@ -50,14 +45,9 @@ class BookReadingDetail(Base):
 
     author_name = Column(String(255))
     author_bio = Column(Text)
-    cover_path = Column(String(255))
     page_count = Column(Integer)
     reading_time = Column(Integer)
-    readers_count = Column(Integer)
     is_new = Column(Boolean, default=False)
-    expected_time_completion = Column(Integer, nullable=True)
-
-    experience_required = Column(Text, nullable=True)
 
     product = relationship("Product", back_populates="book_reading_detail")
     sections = relationship("BookSection", back_populates="book")

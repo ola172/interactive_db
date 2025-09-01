@@ -99,22 +99,11 @@ class UserService:
         enrollment_result = await self.db.execute(enrollment_stmt)
         enrollment = enrollment_result.scalar_one_or_none()
 
-        waiting_stmt = (
-            select(UserWaitingList)
-            .where(UserWaitingList.user_id == user_id, UserWaitingList.product_id == product_id)
-        )
-        waiting_result = await self.db.execute(waiting_stmt)
-        waiting = waiting_result.scalar_one_or_none()
-
         return {
             "enrollment": {
                 "status": enrollment.status if enrollment else None,
                 "progress": enrollment.progress if enrollment else None,
                 "is_like": enrollment.is_like if enrollment else None,
-            },
-            "waiting_list": {
-                "status": waiting.status if waiting else None,
-                "created_at": waiting.created_at if waiting else None,
             }
         }
 
@@ -133,7 +122,8 @@ class UserService:
                 await self.waiting_repo.delete(waiting_entry.id)
             return waiting_entry
 
-    async def add_or_update_product_rating(self, user_id: uuid.UUID, product_id: uuid.UUID, rating: int,
+    async def add_or_update_product_rating(self, user_id: uuid.UUID, product_id: uuid.UUID,
+                                           rating: float,
                                            review: Optional[str] = None):
         """
         Add or update a user's rating and review for a product.

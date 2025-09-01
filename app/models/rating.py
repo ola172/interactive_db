@@ -2,7 +2,7 @@ import uuid
 from datetime import datetime
 from statistics import mean
 
-from sqlalchemy import Column, Integer, Text, ForeignKey, DateTime, UniqueConstraint
+from sqlalchemy import Column, Text, ForeignKey, DateTime, UniqueConstraint, Float
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 
@@ -22,7 +22,7 @@ class ProductRating(Base):
     )
     user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"))
     product_id = Column(UUID(as_uuid=True), ForeignKey("products.id", ondelete="CASCADE"), nullable=False)
-    rating = Column(Integer)
+    rating = Column(Float, nullable=False)
     review = Column(Text)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)

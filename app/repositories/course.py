@@ -1,12 +1,13 @@
-from typing import Sequence, Any, Coroutine
+from typing import Sequence, Any
 from uuid import UUID
 
-from sqlalchemy import select, func
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from app.models import Product, ProductSkill, ProductRating
+from app.models import Product, ProductSkill
 from app.models.course import CourseDetail, Chapter, Video, CourseInstructor
+from app.models.product import Level
 from app.models.skill_objective import ProductObjective
 from app.repositories.base_repo import BaseRepository
 
@@ -15,14 +16,12 @@ class CourseDetailRepository(BaseRepository[CourseDetail]):
     def __init__(self, db: AsyncSession, ):
         super().__init__(CourseDetail, db)
 
-    async def get_by_product_id_(self, product_id: UUID) -> CourseDetail | None:
-        stmt = select(CourseDetail).where(CourseDetail.product_id == product_id)
-        result = await self.db.execute(stmt)
-        return result.scalars().first()
-
-    async def get_course_product(self, product_id: UUID) -> Product | None:
+    async def get_course_product(self, product_id: UUID) -> dict[str, Any] | None:
         stmt = (
-            select(Product)
+            select(
+                Product,
+                Product.average_rating.label("average_rating"),
+            )
             .where(Product.id == product_id)
             .options(
                 # load course → instructors → instructor details
@@ -35,10 +34,29 @@ class CourseDetailRepository(BaseRepository[CourseDetail]):
 
                 # load objectives (via ProductObjective → Objective)
                 selectinload(Product.product_objectives).selectinload(ProductObjective.objective),
+
+                # load level relationship from levels table
+                selectinload(Product.level_obj),
+
+                # load chapters and videos via course_detail
+                selectinload(Product.course_detail)
+                .selectinload(CourseDetail.chapters)
+                .selectinload(Chapter.videos),
             )
         )
+
         result = await self.db.execute(stmt)
-        return result.scalars().first()
+        row = result.first()
+
+        if not row:
+            return None
+
+        product = row.Product
+
+        return {
+            "product": product,
+            "average_rating": row.average_rating
+        }
 
     async def get_all_course_product(
             self,
@@ -48,20 +66,27 @@ class CourseDetailRepository(BaseRepository[CourseDetail]):
     ) -> list[dict[str, Any]]:
         stmt = (
             select(
-                CourseDetail,
-                Product.average_rating.label("average_rating")  # 👈 select hybrid_property
+                Product,
+                Product.average_rating.label("average_rating"),
             )
-            .join(CourseDetail.product)
             .options(
-                selectinload(CourseDetail.product)
-                .selectinload(Product.product_skills)
-                .selectinload(ProductSkill.skill),
+                # load instructors
+                selectinload(Product.course_detail)
+                .selectinload(CourseDetail.instructors)
+                .selectinload(CourseInstructor.instructor),
 
-                selectinload(CourseDetail.product)
-                .selectinload(Product.product_objectives)
-                .selectinload(ProductObjective.objective),
+                # load skills
+                selectinload(Product.product_skills).selectinload(ProductSkill.skill),
 
-                selectinload(CourseDetail.chapters)
+                # load objectives
+                selectinload(Product.product_objectives).selectinload(ProductObjective.objective),
+
+                # load level relationship
+                selectinload(Product.level_obj),
+
+                # load chapters and videos
+                selectinload(Product.course_detail)
+                .selectinload(CourseDetail.chapters)
                 .selectinload(Chapter.videos),
             )
             .order_by(Product.average_rating.desc())
@@ -70,14 +95,14 @@ class CourseDetailRepository(BaseRepository[CourseDetail]):
         )
 
         if category_id:
-            stmt = stmt.where(CourseDetail.product.has(Product.category_id == category_id))
+            stmt = stmt.where(Product.category_id == category_id)
 
         result = await self.db.execute(stmt)
         rows = result.all()
 
         return [
             {
-                "course": row.CourseDetail,
+                "product": row.Product,
                 "average_rating": row.average_rating
             }
             for row in rows

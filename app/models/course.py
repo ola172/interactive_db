@@ -21,17 +21,9 @@ class CourseDetail(Base):
     product_id = Column(UUID(as_uuid=True), ForeignKey("products.id"), unique=True)
 
     # schema fields
-    video_count = Column(Integer)
-    total_hours = Column(Integer)
-    students_count = Column(Integer)
     pre_assessment_id = Column(UUID(as_uuid=True), ForeignKey("quizzes.id"))
     final_exam_id = Column(UUID(as_uuid=True), ForeignKey("quizzes.id"))
     certificate_included = Column(Boolean, default=False)
-
-    # additional fields
-    view_index = Column(Integer, nullable=True)
-    about = Column(Text, nullable=True)
-    duration = Column(String(20), nullable=True)
 
     # Relationships
     product = relationship("Product", back_populates="course_detail", uselist=False)

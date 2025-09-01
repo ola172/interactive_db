@@ -7,6 +7,7 @@ from app.models import ProductCategory
 from app.repositories import (ProductRepository, ProductTypeRepository, ProductCategoryRepository,
                               ProductRatingRepository,
                               SkillRepository, ObjectiveRepository)
+from app.repositories.product import ProductLevelRepository
 from app.schemas.product import ProductTypeCreate, ProductCategoryBase
 from app.schemas.skills_objectives import SkillObjectiveSchema
 from app.services.course_service import CourseService
@@ -16,6 +17,7 @@ class ProductService:
     def __init__(
         self,
         db: AsyncSession,
+        product_level_repository: ProductLevelRepository,
         product_repository: ProductRepository,
         product_type_repository: ProductTypeRepository,
         product_category_repo: ProductCategoryRepository,
@@ -32,6 +34,27 @@ class ProductService:
         self.skill_repository = skill_repository
         self.objective_repository = objective_repository
         self.product_rating_repository = product_rating_repository
+        self.product_level_repository = product_level_repository
+
+    async def create_level(self, level_name: str):
+        """
+        Create a new product level within a transaction.
+        """
+        async with self.db.begin():
+            return await self.product_level_repository.create({"name": level_name})
+
+    async def get_all_levels(self) -> Sequence:
+        """
+        Fetch all product levels.
+        """
+        return await self.product_level_repository.get_all()
+
+    async def delete_level(self, level_id: UUID):
+        """
+        Delete a product level within a transaction.
+        """
+        async with self.db.begin():
+            return await self.product_level_repository.delete(level_id)
 
     async def create_skill(self, skill_data: SkillObjectiveSchema):
         """

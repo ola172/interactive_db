@@ -44,8 +44,10 @@ class BookService:
                     "title": book_data.title,
                     "description": book_data.description,
                     "language": book_data.language,
-                    "level": book_data.level,
+                    "level_id": book_data.level_id,
                     "duration": book_data.duration,
+                    "short_video": book_data.short_video,
+                    "cover": book_data.cover,
                 }
             )
 
@@ -55,13 +57,9 @@ class BookService:
                     "product_id": product.id,
                     "author_name": book_data.author_name,
                     "author_bio": book_data.author_bio,
-                    "cover_path": book_data.cover_path,
                     "page_count": book_data.page_count,
                     "reading_time": book_data.reading_time,
-                    "readers_count": book_data.readers_count,
-                    "is_new": book_data.is_new,
-                    "expected_time_completion": book_data.expected_time_completion,
-                    "experience_required": book_data.experience_required,
+                    "is_new": book_data.is_new
                 }
             )
 

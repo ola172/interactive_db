@@ -54,20 +54,19 @@ class CourseService:
                 "title": course_data.title,
                 "description": course_data.description,
                 "language": course_data.language,
-                "level": course_data.level,
+                "level_id": course_data.level_id,
+                "short_video": course_data.short_video,
+                "cover": course_data.cover,
+                "created_by": course_data.created_by,
                 "duration": course_data.duration,
             })
 
             # 2. Create CourseDetail
             course_detail = await self.course_detail_repo.create({
                 "product_id": product.id,
-                "video_count": sum(len(ch.videos) for ch in course_data.chapters),
-                "total_hours": course_data.total_hours or 0,
-                "students_count": course_data.students_count or 0,
                 "certificate_included": course_data.certificate_included,
                 "pre_assessment_id": course_data.pre_assessment_id,
                 "final_exam_id": course_data.final_exam_id,
-                "about": course_data.about,
             })
 
             # 3. Create Chapters and Videos
@@ -76,8 +75,6 @@ class CourseService:
                     "course_id": course_detail.id,
                     "title": chapter.title,
                     "description": chapter.description,
-                    "about": chapter.about,
-                    "view_index": chapter_index + 1,
                     "quiz_id": chapter.quiz_id,
                 })
 

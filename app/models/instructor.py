@@ -1,6 +1,6 @@
 import uuid
 
-from sqlalchemy import Column, Integer, String, Text, Boolean, ForeignKey, DECIMAL
+from sqlalchemy import Column, String, Text, Boolean, ForeignKey
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 
@@ -25,14 +25,7 @@ class Instructor(Base):
     education = Column(Text)
     profile_image = Column(String(255))
 
-    rating = Column(DECIMAL(2, 1))
-    review_count = Column(Integer, default=0)
-    courses_count = Column(Integer, default=0)
-    students_count = Column(Integer, default=0)
-
     is_top_rated = Column(Boolean, default=False)
-    is_featured = Column(Boolean, default=False)
-    is_expert = Column(Boolean, default=False)
     is_new = Column(Boolean, default=False)
 
     # relationships

@@ -5,7 +5,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models import ProductCategory
-from app.models.product import Product, ProductType
+from app.models.product import Product, ProductType, Level
 from app.repositories.base_repo import BaseRepository
 
 
@@ -32,3 +32,8 @@ class ProductTypeRepository(BaseRepository[ProductType]):
 class ProductCategoryRepository(BaseRepository[ProductCategory]):
     def __init__(self, db: AsyncSession):
         super().__init__(ProductCategory, db)
+
+
+class ProductLevelRepository(BaseRepository):
+    def __init__(self, db: AsyncSession):
+        super().__init__(Level, db)

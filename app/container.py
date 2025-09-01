@@ -14,6 +14,7 @@ from app.repositories import (ProductTypeRepository, ProductRepository,
                               ProductSkillRepository, ProductObjectiveRepository,
                               BookVideosRepository, PathwayRepository,
                               PathwayItemRepository,
+                              ProductLevelRepository,
                               ProductCategoryRepository, BookVideoDetailsRepository)
 from app.repositories.user import UserRepository, UserProductRepository, UserWaitingListRepository
 from app.services import CourseService
@@ -43,6 +44,10 @@ async def get_user_product_repository(
 ) -> AsyncGenerator[UserProductRepository, Any]:
     yield UserProductRepository(session)
 
+async def get_product_level_repository(
+        session: AsyncSession = Depends(get_db_session),
+) -> AsyncGenerator[ProductLevelRepository, Any]:
+    yield ProductLevelRepository(session)
 
 async def get_user_waiting_list_repository(
         session: AsyncSession = Depends(get_db_session),
@@ -244,6 +249,7 @@ async def get_product_service(
         skill_repository: SkillRepository = Depends(get_skill_repository),
         objective_repository: ObjectiveRepository = Depends(get_objective_repository),
         product_rating_repo: ProductRatingRepository = Depends(get_product_rating_repository),
+        product_level_repository: ProductLevelRepository = Depends(get_product_level_repository),
         course_service: CourseService = Depends(get_course_service),
 ) -> AsyncGenerator["ProductService", Any]:
     yield ProductService(
@@ -254,6 +260,7 @@ async def get_product_service(
         skill_repository=skill_repository,
         objective_repository=objective_repository,
         product_rating_repository=product_rating_repo,
+        product_level_repository=product_level_repository,
         db=product_repository.db,
     )
 

@@ -3,7 +3,8 @@ from .book import BookSectionRepository, BookVideoDetailsRepository, BookReading
 from .course import CourseDetailRepository, VideoRepository, ChapterRepository
 from .instructor import InstructorRepository, InstructorSkillRepository, CourseInstructorRepository
 from .pathway import PathwayRepository, PathwayItemRepository
-from .product import ProductRepository, ProductTypeRepository, ProductCategoryRepository
+from .product import (ProductRepository, ProductTypeRepository,
+                      ProductCategoryRepository, ProductLevelRepository)
 from .quiz import QuizRepository, AnswerRepository, QuizQuestionRepository, QuestionRepository
 from .rating import ProductRatingRepository
 from .skill import SkillRepository, ObjectiveRepository, ProductObjectiveRepository, ProductSkillRepository
@@ -37,5 +38,6 @@ __all__ = [
     "ProductCategoryRepository",
     "ProductObjectiveRepository",
     "ProductSkillRepository",
+    "ProductLevelRepository",
 
 ]

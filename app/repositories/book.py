@@ -18,30 +18,44 @@ class BookVideoDetailsRepository(BaseRepository[BookVideoDetail]):
             self, page: int = 1, limit: int = 10, category_id: Optional[UUID] = None
     ) -> list[dict[str, Any]]:
         """
-        Fetch all BookVideoDetail records with related Product, Videos, skills, objectives, and average rating.
+        Fetch all Products with related BookVideoDetail (including BookVideos),
+        skills, objectives, level, and average rating.
         Optionally filter by product category_id.
         """
         stmt = (
-            select(BookVideoDetail, Product.average_rating.label("average_rating"))
-            .join(BookVideoDetail.product)
-            .options(
-                selectinload(BookVideoDetail.product).selectinload(Product.skills),
-                selectinload(BookVideoDetail.product).selectinload(Product.objectives),
-                selectinload(BookVideoDetail.videos),
+            select(
+                Product,
+                Product.average_rating.label("average_rating"),
             )
+            .options(
+                # load BookVideoDetail and its BookVideos
+                selectinload(Product.book_video_detail)
+                .selectinload(BookVideoDetail.videos),
+
+                # load skills
+                selectinload(Product.skills),
+
+                # load objectives
+                selectinload(Product.objectives),
+
+                # load level relationship
+                selectinload(Product.level_obj),
+            )
+            .order_by(Product.average_rating.desc())
+            .offset((page - 1) * limit)
+            .limit(limit)
         )
 
         if category_id:
-            stmt = stmt.where(BookVideoDetail.product.has(Product.category_id == category_id))
+            stmt = stmt.where(Product.category_id == category_id)
 
-        stmt = stmt.offset((page - 1) * limit).limit(limit)
         result = await self.db.execute(stmt)
         rows = result.all()
 
         return [
             {
-                "book_video": row.BookVideoDetail,
-                "average_rating": row.average_rating
+                "product": row.Product,  # contains book_video_detail and videos
+                "average_rating": row.average_rating,
             }
             for row in rows
         ]
@@ -50,16 +64,28 @@ class BookVideoDetailsRepository(BaseRepository[BookVideoDetail]):
             self, product_id: UUID
     ) -> Optional[dict[str, Any]]:
         """
-        Fetch a single BookVideoDetail by product_id with related Product, Videos, skills, objectives, and average rating.
+        Fetch a single Product by product_id with related BookVideoDetail (including Videos),
+        skills, objectives, level, and average rating.
         """
         stmt = (
-            select(BookVideoDetail, Product.average_rating.label("average_rating"))
-            .join(BookVideoDetail.product)
-            .where(BookVideoDetail.product_id == product_id)
+            select(
+                Product,
+                Product.average_rating.label("average_rating"),
+            )
+            .where(Product.id == product_id)
             .options(
-                selectinload(BookVideoDetail.product).selectinload(Product.skills),
-                selectinload(BookVideoDetail.product).selectinload(Product.objectives),
-                selectinload(BookVideoDetail.videos),
+                # load BookVideoDetail and its Videos
+                selectinload(Product.book_video_detail)
+                .selectinload(BookVideoDetail.videos),
+
+                # load skills
+                selectinload(Product.skills),
+
+                # load objectives
+                selectinload(Product.objectives),
+
+                # load level relationship
+                selectinload(Product.level_obj),
             )
         )
 
@@ -70,8 +96,8 @@ class BookVideoDetailsRepository(BaseRepository[BookVideoDetail]):
             return None
 
         return {
-            "book_video": row.BookVideoDetail,
-            "average_rating": row.average_rating
+            "product": row.Product,  # includes book_video_detail + videos
+            "average_rating": row.average_rating,
         }
 
 
@@ -86,21 +112,27 @@ class BookReadingRepository(BaseRepository[BookReadingDetail]):
 
     async def get_book_with_sections(self, product_id: UUID) -> dict[str, Any] | None:
         """
-        Fetch a single BookReadingDetail by product_id with its sections,
-        product details, skills, objectives, and average rating.
+        Fetch a single Product by product_id with its BookReadingDetail, Sections,
+        skills, objectives, and average rating.
         """
         stmt = (
             select(
-                BookReadingDetail,
-                Product.average_rating.label("average_rating")
+                Product,
+                Product.average_rating.label("average_rating"),
             )
-            .join(BookReadingDetail.product)  # join with Product
             .options(
-                selectinload(BookReadingDetail.product).selectinload(Product.skills),
-                selectinload(BookReadingDetail.product).selectinload(Product.objectives),
-                selectinload(BookReadingDetail.sections),
+                # Load the book reading detail and its sections
+                selectinload(Product.book_reading_detail)
+                .selectinload(BookReadingDetail.sections),
+
+                # Load product skills and objectives
+                selectinload(Product.skills),
+                selectinload(Product.objectives),
+
+                # Load product level
+                selectinload(Product.level_obj),
             )
-            .where(BookReadingDetail.product_id == product_id)
+            .where(Product.id == product_id)
         )
 
         result = await self.db.execute(stmt)
@@ -109,48 +141,58 @@ class BookReadingRepository(BaseRepository[BookReadingDetail]):
         if not row:
             return None
 
-        book = row.BookReadingDetail
+        product = row.Product
         average_rating = row.average_rating
 
-        # Ensure sections are ordered
-        book.sections.sort(key=lambda s: s.stage_index)
+        # Ensure sections are ordered if book exists
+        if product.book_reading_detail and product.book_reading_detail.sections:
+            product.book_reading_detail.sections.sort(key=lambda s: s.stage_index)
 
         return {
-            "book_reading": book,
-            "average_rating": average_rating
+            "product": product,
+            "average_rating": average_rating,
         }
 
     async def get_all_with_details(
             self, page: int = 1, limit: int = 10, category_id: Optional[UUID] = None
     ) -> list[dict[str, Any]]:
         """
-        Fetch all BookReadingDetail records with related Product, Sections, skills, and objectives.
+        Fetch all Products with related BookReadingDetail (including Sections),
+        skills, objectives, level, and average rating.
         Optionally filter by product category_id.
         """
         stmt = (
             select(
-                BookReadingDetail,
-                Product.average_rating.label("average_rating")
+                Product,
+                Product.average_rating.label("average_rating"),
             )
-            .join(BookReadingDetail.product)
             .options(
-                selectinload(BookReadingDetail.product).selectinload(Product.skills),
-                selectinload(BookReadingDetail.product).selectinload(Product.objectives),
-                selectinload(BookReadingDetail.sections),
+                # Load BookReadingDetail and its sections
+                selectinload(Product.book_reading_detail)
+                .selectinload(BookReadingDetail.sections),
+
+                # Load product skills and objectives
+                selectinload(Product.skills),
+                selectinload(Product.objectives),
+
+                # Load product level
+                selectinload(Product.level_obj),
             )
+            .order_by(Product.average_rating.desc())
+            .offset((page - 1) * limit)
+            .limit(limit)
         )
 
         if category_id:
-            stmt = stmt.where(BookReadingDetail.product.has(Product.category_id == category_id))
+            stmt = stmt.where(Product.category_id == category_id)
 
-        stmt = stmt.offset((page - 1) * limit).limit(limit)
         result = await self.db.execute(stmt)
         rows = result.all()
 
         return [
             {
-                "book_reading": row.BookReadingDetail,
-                "average_rating": row.average_rating
+                "product": row.Product,
+                "average_rating": row.average_rating,
             }
             for row in rows
         ]

@@ -12,22 +12,21 @@ class BookSectionSchema(BaseModel):
 class BookCreate(BaseModel):
     product_type_id: uuid.UUID
     product_category_id: uuid.UUID
+    created_by: uuid.UUID
     title: str
     description: str
     language: str
-    level: str
-    duration: int
+    level_id: uuid.UUID
+    duration: str
+    short_video: Optional[str] = None
+    cover: Optional[str] = None
 
     # book details
     author_name: str
     author_bio: Optional[str] = None
-    cover_path: Optional[str] = None
     page_count: Optional[int] = None
     reading_time: Optional[int] = None
-    readers_count: Optional[int] = 0
     is_new: Optional[bool] = False
-    expected_time_completion: Optional[int] = None
-    experience_required: Optional[str] = None
 
     # relations
     sections: Optional[List[BookSectionSchema]] = Field(default=None)

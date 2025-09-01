@@ -23,16 +23,16 @@ class BookVideoCreate(BaseModel):
     title: str
     description: str
     language: str
-    level: str
-    duration: int
+    level_id: uuid.UUID
+    duration: str
+    cover: Optional[str] = None
+    short_video: Optional[str] = None
+
+    created_by: Optional[uuid.UUID] = None
 
     # Book Video details
     author_name: str
-    cover_path: Optional[str] = None
-    price: Optional[condecimal(max_digits=10, decimal_places=2)] = None
-    total_videos: Optional[int] = None
-    total_hours: Optional[int] = None
-    url: Optional[str] = None
+    author_bio: Optional[str] = None
     expected_time_completion: Optional[int] = None
 
     # Relations
