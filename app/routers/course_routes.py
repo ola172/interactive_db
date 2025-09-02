@@ -30,7 +30,8 @@ async def get_all_courses(
     """
     Get all courses with optional pagination.
     """
-    return await course_service.get_all_courses(page=page, limit=limit, category_id=category_id)
+    courses = await course_service.get_all_courses(page=page, limit=limit, category_id=category_id)
+    return {"results": courses}
 
 @course_router.get("/{product_id}")
 async def get_course_by_id(
@@ -40,7 +41,8 @@ async def get_course_by_id(
     """
     Get a course by its product ID.
     """
-    return await course_service.get_course_product(product_id=product_id)
+    results = await course_service.get_course_product(product_id=product_id)
+    return {"results": results}
 
 
 @course_router.delete("/{product_id}")
@@ -51,4 +53,5 @@ async def delete_course(
     """
     Delete a course by its ID.
     """
-    return await course_service.delete_course_product(product_id=product_id)
+    results = await course_service.delete_course_product(product_id=product_id)
+    return {"results": results}

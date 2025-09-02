@@ -24,11 +24,12 @@ async def get_all_pathways(
         limit: int = Query(10, ge=1, le=100),
         category_id: uuid.UUID | None = None,
         service: PathwayService = Depends(get_pathway_service)):
-    return await service.get_all_pathways(
+    results = await service.get_all_pathways(
         page=page,
         limit=limit,
         category_id=category_id
     )
+    return {"results": results}
 
 
 @pathway_router.get("/{pathway_id}")

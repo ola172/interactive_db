@@ -32,7 +32,9 @@ async def get_all_books(
     """
     Get all reading books with optional pagination and category filtering.
     """
-    return await book_service.get_all_reading_books(page=page, limit=limit, category_id=category_id)
+    book_reading = await book_service.get_all_reading_books(page=page, limit=limit,
+                                                            category_id=category_id)
+    return {"results": book_reading}
 
 
 @book_router.get("/reading/{product_id}")
@@ -40,7 +42,8 @@ async def get_book_by_id(
         product_id: uuid.UUID,
         book_service: BookService = Depends(get_book_service)
 ):
-    return await book_service.get_book_by_product_id(product_id)
+    book_reading = await book_service.get_book_by_product_id(product_id)
+    return {"results": book_reading}
 
 
 @book_router.post("/video")
@@ -60,7 +63,9 @@ async def get_all_video_books(
                      | None = None,
         book_video_service: BookVideoService = Depends(get_book_video_service)
 ):
-    return await book_video_service.get_all_video_books(page=page, limit=limit, category_id=category_id)
+    book_video = await book_video_service.get_all_video_books(page=page, limit=limit,
+                                                              category_id=category_id)
+    return {"results": book_video}
 
 
 @book_router.get("/video/{product_id}")
@@ -68,4 +73,5 @@ async def get_video_book_by_id(
         product_id: uuid.UUID,
         book_video_service: BookVideoService = Depends(get_book_video_service)
 ):
-    return await book_video_service.get_book_video_by_product_id(product_id)
+    book_reading = await book_video_service.get_book_video_by_product_id(product_id)
+    return {"results": book_reading}

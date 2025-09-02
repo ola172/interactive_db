@@ -19,13 +19,14 @@ class BookVideoDetailsRepository(BaseRepository[BookVideoDetail]):
     ) -> list[dict[str, Any]]:
         """
         Fetch all Products with related BookVideoDetail (including BookVideos),
-        skills, objectives, level, and average rating.
+        skills, objectives, level, average rating, and book video count.
         Optionally filter by product category_id.
         """
         stmt = (
             select(
                 Product,
                 Product.average_rating.label("average_rating"),
+                Product.book_video_count.label("book_video_count"),  # ✅ add book video count
             )
             .options(
                 # load BookVideoDetail and its BookVideos
@@ -54,8 +55,9 @@ class BookVideoDetailsRepository(BaseRepository[BookVideoDetail]):
 
         return [
             {
-                "product": row.Product,  # contains book_video_detail and videos
+                "product": row.Product,
                 "average_rating": row.average_rating,
+                "book_video_count": row.book_video_count,
             }
             for row in rows
         ]
@@ -113,23 +115,20 @@ class BookReadingRepository(BaseRepository[BookReadingDetail]):
     async def get_book_with_sections(self, product_id: UUID) -> dict[str, Any] | None:
         """
         Fetch a single Product by product_id with its BookReadingDetail, Sections,
-        skills, objectives, and average rating.
+        skills, objectives, average rating, and section count.
         """
         stmt = (
             select(
                 Product,
                 Product.average_rating.label("average_rating"),
+                Product.book_section_count.label("book_section_count"),  # ✅ from Product hybrid
             )
             .options(
-                # Load the book reading detail and its sections
                 selectinload(Product.book_reading_detail)
                 .selectinload(BookReadingDetail.sections),
 
-                # Load product skills and objectives
                 selectinload(Product.skills),
                 selectinload(Product.objectives),
-
-                # Load product level
                 selectinload(Product.level_obj),
             )
             .where(Product.id == product_id)
@@ -143,6 +142,7 @@ class BookReadingRepository(BaseRepository[BookReadingDetail]):
 
         product = row.Product
         average_rating = row.average_rating
+        book_section_count = row.book_section_count
 
         # Ensure sections are ordered if book exists
         if product.book_reading_detail and product.book_reading_detail.sections:
@@ -151,6 +151,7 @@ class BookReadingRepository(BaseRepository[BookReadingDetail]):
         return {
             "product": product,
             "average_rating": average_rating,
+            "book_section_count": book_section_count,
         }
 
     async def get_all_with_details(
@@ -158,24 +159,21 @@ class BookReadingRepository(BaseRepository[BookReadingDetail]):
     ) -> list[dict[str, Any]]:
         """
         Fetch all Products with related BookReadingDetail (including Sections),
-        skills, objectives, level, and average rating.
+        skills, objectives, level, average rating, and section count.
         Optionally filter by product category_id.
         """
         stmt = (
             select(
                 Product,
                 Product.average_rating.label("average_rating"),
+                Product.book_section_count.label("book_section_count"),  # ✅ from Product hybrid
             )
             .options(
-                # Load BookReadingDetail and its sections
                 selectinload(Product.book_reading_detail)
                 .selectinload(BookReadingDetail.sections),
 
-                # Load product skills and objectives
                 selectinload(Product.skills),
                 selectinload(Product.objectives),
-
-                # Load product level
                 selectinload(Product.level_obj),
             )
             .order_by(Product.average_rating.desc())
@@ -193,6 +191,7 @@ class BookReadingRepository(BaseRepository[BookReadingDetail]):
             {
                 "product": row.Product,
                 "average_rating": row.average_rating,
+                "book_section_count": row.book_section_count,
             }
             for row in rows
         ]

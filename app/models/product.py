@@ -1,14 +1,16 @@
 # app/models/product.py
 import uuid
 from datetime import datetime
-from sqlalchemy.ext.hybrid import hybrid_property
+
+from sqlalchemy import Column, String, Text, DateTime, ForeignKey
 from sqlalchemy import func, select
-from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey, DECIMAL
 from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import expression
 
 from app.core.database import Base
+from app.models.book import BookVideos, BookVideoDetail
 from app.models.rating import ProductRating
 
 
@@ -19,9 +21,8 @@ class ProductType(Base):
         UUID(as_uuid=True),
         primary_key=True,
         default=uuid.uuid4,
-        unique=True,
         nullable=False,
-        index=True,
+
     )
     name = Column(String(50), unique=True, nullable=False)
 
@@ -37,10 +38,7 @@ class Level(Base):
         UUID(as_uuid=True),
         primary_key=True,
         default=uuid.uuid4,
-        unique=True,
-        nullable=False,
-        index=True,
-    )
+        nullable=False)
     name = Column(String(50), unique=True, nullable=False)
 
     # relationship with products
@@ -60,11 +58,11 @@ class Product(Base):
     )
 
     # Foreign keys
-    type_id = Column(UUID(as_uuid=True), ForeignKey("product_types.id"), nullable=False)
-    category_id = Column(UUID(as_uuid=True), ForeignKey("product_categories.id"), nullable=True)
-    created_by = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
-    updated_by = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
-    level_id = Column(UUID(as_uuid=True), ForeignKey("levels.id"), nullable=True)  # updated
+    type_id = Column(UUID(as_uuid=True), ForeignKey("product_types.id"), nullable=False, index=True)
+    category_id = Column(UUID(as_uuid=True), ForeignKey("product_categories.id"), nullable=True, index=True)
+    created_by = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True, index=True)
+    updated_by = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True, index=True)
+    level_id = Column(UUID(as_uuid=True), ForeignKey("levels.id"), nullable=True, index=True)
 
     # Product fields
     title = Column(String(255), nullable=False)
@@ -87,8 +85,10 @@ class Product(Base):
     category = relationship("ProductCategory", back_populates="products")
 
     # details
-    book_video_detail = relationship("BookVideoDetail", back_populates="product", uselist=False)
-    book_reading_detail = relationship("BookReadingDetail", back_populates="product", uselist=False)
+    book_video_detail = relationship("BookVideoDetail", back_populates="product", uselist=False,
+                                     cascade="all, delete-orphan")
+    book_reading_detail = relationship("BookReadingDetail", back_populates="product", uselist=False,
+                                       cascade="all, delete-orphan")
     course_detail = relationship(
         "CourseDetail",
         back_populates="product",
@@ -111,7 +111,6 @@ class Product(Base):
     skills = relationship("Skill", secondary="product_skills", viewonly=True)
     objectives = relationship("Objective", secondary="product_objectives", viewonly=True)
 
-
     @hybrid_property
     def average_rating(self):
         if not self.ratings:
@@ -126,3 +125,73 @@ class Product(Base):
             .correlate_except(ProductRating)
             .scalar_subquery()
         )
+
+    @hybrid_property
+    def chapter_count(self):
+        if self.course_detail and self.course_detail.chapters:
+            return len(self.course_detail.chapters)
+        return 0
+
+    @chapter_count.expression
+    def chapter_count(cls):
+        from app.models.course import CourseDetail, Chapter
+        return (
+            select(func.count(Chapter.id))
+            .join(CourseDetail, Chapter.course_id == CourseDetail.id)
+            .where(CourseDetail.product_id == cls.id)
+            .correlate_except(Chapter)
+            .scalar_subquery()
+        )
+
+    @hybrid_property
+    def video_count(self):
+        if self.course_detail and self.course_detail.chapters:
+            return sum(len(ch.videos) for ch in self.course_detail.chapters)
+        return 0
+
+    @video_count.expression
+    def video_count(cls):
+        from app.models.course import CourseDetail, Chapter, Video
+        return (
+            select(func.count(Video.id))
+            .join(Chapter, Video.chapter_id == Chapter.id)
+            .join(CourseDetail, Chapter.course_id == CourseDetail.id)
+            .where(CourseDetail.product_id == cls.id)
+            .correlate_except(Video)
+            .scalar_subquery()
+        )
+
+    @hybrid_property
+    def book_video_count(self):
+        if self.book_video_detail and self.book_video_detail.videos:
+            return len(self.book_video_detail.videos)
+        return 0
+
+    @book_video_count.expression
+    def book_video_count(cls):
+        from app.models.book import BookVideoDetail, BookVideos
+        return (
+            select(func.count(BookVideos.id))
+            .join(BookVideoDetail, BookVideos.book_id == BookVideoDetail.id)
+            .where(BookVideoDetail.product_id == cls.id)
+            .correlate_except(BookVideos)
+            .scalar_subquery()
+        )
+
+    @hybrid_property
+    def book_section_count(self):
+        if self.book_reading_detail and self.book_reading_detail.sections:
+            return len(self.book_reading_detail.sections)
+        return 0
+
+    @book_section_count.expression
+    def book_section_count(cls):
+        from app.models.book import BookReadingDetail, BookSection
+        return (
+            select(func.count(BookSection.id))
+            .join(BookReadingDetail, BookSection.book_id == BookReadingDetail.id)
+            .where(BookReadingDetail.product_id == cls.id)
+            .correlate_except(BookSection)
+            .scalar_subquery()
+        )
+

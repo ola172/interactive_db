@@ -21,6 +21,8 @@ class CourseDetailRepository(BaseRepository[CourseDetail]):
             select(
                 Product,
                 Product.average_rating.label("average_rating"),
+                Product.chapter_count.label("chapter_count"),
+                Product.video_count.label("video_count"),
             )
             .where(Product.id == product_id)
             .options(
@@ -55,36 +57,41 @@ class CourseDetailRepository(BaseRepository[CourseDetail]):
 
         return {
             "product": product,
-            "average_rating": row.average_rating
+            "average_rating": row.average_rating,
+            "chapter_count": row.chapter_count,
+            "video_count": row.video_count,
         }
 
+
     async def get_all_course_product(
-            self,
-            page: int = 1,
-            limit: int = 10,
-            category_id: UUID | None = None,
+        self,
+        page: int = 1,
+        limit: int = 10,
+        category_id: UUID | None = None,
     ) -> list[dict[str, Any]]:
         stmt = (
             select(
                 Product,
                 Product.average_rating.label("average_rating"),
+                Product.chapter_count.label("chapter_count"),
+                Product.video_count.label("video_count"),
             )
             .options(
-                # load instructors
+                # course → instructors → instructor details
                 selectinload(Product.course_detail)
                 .selectinload(CourseDetail.instructors)
                 .selectinload(CourseInstructor.instructor),
 
-                # load skills
+                # skills
                 selectinload(Product.product_skills).selectinload(ProductSkill.skill),
 
-                # load objectives
+                # objectives
                 selectinload(Product.product_objectives).selectinload(ProductObjective.objective),
 
-                # load level relationship
+                # level
                 selectinload(Product.level_obj),
 
-                # load chapters and videos
+                # chapters → videos
                 selectinload(Product.course_detail)
                 .selectinload(CourseDetail.chapters)
                 .selectinload(Chapter.videos),
@@ -103,7 +110,9 @@ class CourseDetailRepository(BaseRepository[CourseDetail]):
         return [
             {
                 "product": row.Product,
-                "average_rating": row.average_rating
+                "average_rating": row.average_rating,
+                "chapter_count": row.chapter_count,
+                "video_count": row.video_count,
             }
             for row in rows
         ]

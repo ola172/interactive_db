@@ -24,7 +24,8 @@ async def read_product_categories(
         product_service: ProductService = Depends(get_product_service),
 ):
     categories = await product_service.get_all_product_categories()
-    return [c.__dict__ for c in categories]
+    results = [c.__dict__ for c in categories]
+    return {"results": results}
 
 
 @product_router.post("/skills")
@@ -40,8 +41,8 @@ async def read_skills(
         product_service: ProductService = Depends(get_product_service),
 ):
     skills = await product_service.get_all_skills()
-    return [s.__dict__ for s in skills]
-
+    results = [s.__dict__ for s in skills]
+    return {"results": results}
 
 @product_router.post("/objectives")
 async def create_objective(
@@ -56,7 +57,8 @@ async def read_objectives(
         product_service: ProductService = Depends(get_product_service),
 ):
     objectives = await product_service.get_all_objectives()
-    return [o.__dict__ for o in objectives]
+    result = [o.__dict__ for o in objectives]
+    return {"results": result}
 
 
 @product_router.get("/types")
@@ -64,7 +66,8 @@ async def read_product_types(
         product_service: ProductService = Depends(get_product_service),
 ):
     types = await product_service.get_all_product_types()
-    return [t.__dict__ for t in types]
+    results = [t.__dict__ for t in types]
+    return {"results": results}
 
 
 @product_router.delete("/products/{product_id}")
@@ -87,12 +90,13 @@ async def get_all_products_by_type(
         category_id: UUID | None = None,
         product_service: ProductService = Depends(get_product_service)
 ):
-    return await product_service.get_all_products_by_type(
+    results = await product_service.get_all_products_by_type(
         product_type_id=product_type_id,
         page=page,
         limit=limit,
         category_id=category_id
     )
+    return {"results": results}
 
 
 @product_router.get("/{product_id}/rating")
@@ -100,7 +104,8 @@ async def get_product_rating(
         product_id: UUID,
         product_service: ProductService = Depends(get_product_service)
 ):
-    return await product_service.get_product_rating(product_id)
+    results = await product_service.get_product_rating(product_id)
+    return {"results": results}
 
 
 @product_router.post("/levels")
@@ -116,9 +121,11 @@ async def read_product_levels(
         product_service: ProductService = Depends(get_product_service),
 ):
     levels = await product_service.get_all_levels()
-    return [l.__dict__ for l in levels]
+    results =  [l.__dict__ for l in levels]
+    return {"results": results}
 
 
 @product_router.delete("/levels/{level_id}")
 async def delete_product_level(level_id: UUID, product_service: ProductService = Depends(get_product_service)):
-    return await product_service.delete_level(level_id)
+    results = await product_service.delete_level(level_id)
+    return {"results": results}

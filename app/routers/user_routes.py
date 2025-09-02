@@ -28,11 +28,13 @@ async def add_user_waiting_list(user_id: uuid.UUID, product: UserWaitingListSche
 
 @router.get("/all")
 async def get_all_users(service: UserService = Depends(get_user_service)):
-    return await service.get_all_users()
+    results = await service.get_all_users()
+    return {"results": results}
 
 @router.get("/{user_id}")
 async def get_user(user_id: uuid.UUID, service: UserService = Depends(get_user_service)):
-    return await service.get_user_with_enrollments(user_id)
+    results = await service.get_user_with_enrollments(user_id)
+    return {"results": results}
 
 
 # ✅ Get status of a product for a user

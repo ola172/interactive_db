@@ -24,12 +24,14 @@ async def get_all_instructors(
     limit: int = Query(10, ge=1, le=100),
     instructor_service: InstructorService = Depends(get_instructor_service)
 ):
-    return await instructor_service.get_all_instructors(page, limit)
+    results = await instructor_service.get_all_instructors(page, limit)
+    return {"results": results}
 
 @instructor_router.get("/{instructor_id}")
 async def get_instructor_by_id(
     instructor_id: uuid.UUID,
     instructor_service: InstructorService = Depends(get_instructor_service)
 ):
-    return await instructor_service.get_instructor_by_id(instructor_id)
+    results = await instructor_service.get_instructor_by_id(instructor_id)
+    return {"results": results}
 
