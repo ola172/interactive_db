@@ -1,10 +1,10 @@
 # app/repositories/skill_objective_repo.py
-from typing import Any, Coroutine, Sequence
+from typing import Sequence
 
-from sqlalchemy import Row, RowMapping
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
+from app.exceptions.repo_exception import RepoException
 from app.models.skill_objective import (
     Skill,
     ProductSkill,
@@ -20,13 +20,20 @@ class SkillRepository(BaseRepository[Skill]):
 
     async def get_skills_by_product(self, product_id: str) -> Sequence[Skill]:
         """Get all skills linked to a specific product"""
-        stmt = (
-            select(Skill)
-            .join(ProductSkill, ProductSkill.skill_id == Skill.id)
-            .where(ProductSkill.product_id == product_id)
-        )
-        result = await self.db.execute(stmt)
-        return result.scalars().all()
+        try:
+            stmt = (
+                select(Skill)
+                .join(ProductSkill, ProductSkill.skill_id == Skill.id)
+                .where(ProductSkill.product_id == product_id)
+            )
+            result = await self.db.execute(stmt)
+            return result.scalars().all()
+        except Exception as e:
+            raise RepoException(
+                status_code=500,
+                detail="Error retrieving skills by product",
+                additional_info={"error": str(e), "product_id": product_id},
+            )
 
 
 class ProductSkillRepository(BaseRepository[ProductSkill]):
@@ -40,13 +47,21 @@ class ObjectiveRepository(BaseRepository[Objective]):
 
     async def get_objectives_by_product(self, product_id: str) -> Sequence[Objective]:
         """Get all objectives linked to a specific product"""
-        stmt = (
-            select(Objective)
-            .join(ProductObjective, ProductObjective.objective_id == Objective.id)
-            .where(ProductObjective.product_id == product_id)
-        )
-        result = await self.db.execute(stmt)
-        return result.scalars().all()
+        try:
+            stmt = (
+                select(Objective)
+                .join(ProductObjective, ProductObjective.objective_id == Objective.id)
+                .where(ProductObjective.product_id == product_id)
+            )
+            result = await self.db.execute(stmt)
+            return result.scalars().all()
+        except Exception as e:
+            raise RepoException(
+                status_code=500,
+                detail="Error retrieving objectives by product",
+                additional_info={"error": str(e), "product_id": product_id},
+            )
+
 
 class ProductObjectiveRepository(BaseRepository[ProductObjective]):
     def __init__(self, db: AsyncSession):

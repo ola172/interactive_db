@@ -10,8 +10,9 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.sql import expression
 
 from app.core.database import Base
-from app.models.book import BookVideos, BookVideoDetail
 from app.models.rating import ProductRating
+from app.models.skill_objective import ProductObjective
+from app.models.skill_objective import ProductSkill
 
 
 class ProductType(Base):
@@ -195,3 +196,32 @@ class Product(Base):
             .scalar_subquery()
         )
 
+    @hybrid_property
+    def skill_count(self):
+        if self.product_skills:
+            return len(self.product_skills)
+        return 0
+
+    @skill_count.expression
+    def skill_count(cls):
+        return (
+            select(func.count(ProductSkill.id))
+            .where(ProductSkill.product_id == cls.id)
+            .correlate_except(ProductSkill)
+            .scalar_subquery()
+        )
+
+    @hybrid_property
+    def objective_count(self):
+        if self.product_objectives:
+            return len(self.product_objectives)
+        return 0
+
+    @objective_count.expression
+    def objective_count(cls):
+        return (
+            select(func.count(ProductObjective.id))
+            .where(ProductObjective.product_id == cls.id)
+            .correlate_except(ProductObjective)
+            .scalar_subquery()
+        )

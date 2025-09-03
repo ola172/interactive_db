@@ -45,6 +45,11 @@ class User(Base):
     ratings = relationship("ProductRating", back_populates="user")
     waiting_list = relationship("UserWaitingList", back_populates="user")
     enrollments = relationship("UserProduct", back_populates="user")
+    instructor_ratings = relationship(
+        "InstructorRating",
+        back_populates="user",
+        cascade="all, delete-orphan"
+    )
 
 
 class UserProduct(Base):

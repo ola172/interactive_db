@@ -16,6 +16,7 @@ from app.repositories import (ProductTypeRepository, ProductRepository,
                               PathwayItemRepository,
                               ProductLevelRepository,
                               ProductCategoryRepository, BookVideoDetailsRepository)
+from app.repositories.instructor import InstructorRateRepository
 from app.repositories.user import UserRepository, UserProductRepository, UserWaitingListRepository
 from app.services import CourseService
 from app.services import ProductService
@@ -27,7 +28,6 @@ from app.services.user_service import UserService
 
 db = Database()
 
-
 async def get_db_session() -> AsyncGenerator[AsyncSession, Any]:
     async for session in db.get_session():
         yield session
@@ -37,6 +37,11 @@ async def get_user_repository(
         session: AsyncSession = Depends(get_db_session),
 ) -> AsyncGenerator[UserRepository, Any]:
     yield UserRepository(session)
+
+async def get_instructor_rate_repository(
+        session: AsyncSession = Depends(get_db_session),
+) -> AsyncGenerator[InstructorRateRepository, Any]:
+    yield InstructorRateRepository(session)
 
 
 async def get_user_product_repository(
@@ -172,11 +177,13 @@ async def get_video_repository(
 async def get_user_service(
         user_repo: UserRepository = Depends(get_user_repository),
         user_product_repo: UserProductRepository = Depends(get_user_product_repository),
+        instructor_rate_repo: InstructorRateRepository = Depends(get_instructor_rate_repository),
         waiting_repo: UserWaitingListRepository = Depends(get_user_waiting_list_repository),
 ) -> AsyncGenerator["UserService", Any]:
     yield UserService(db=user_repo.db,
                       user_repo=user_repo,
                       user_product_repo=user_product_repo,
+                      instructor_rate_repo=instructor_rate_repo,
                       waiting_repo=waiting_repo)
 
 
@@ -218,9 +225,11 @@ async def get_course_service(
 
 async def get_instructor_service(
         instructor_repo: InstructorRepository = Depends(get_instructor_repository),
+        instructor_rate_repo: InstructorRateRepository = Depends(get_instructor_rate_repository)
 ) -> AsyncGenerator["InstructorService", Any]:
     yield InstructorService(
         instructor_repository=instructor_repo,
+        instructor_rate_repo=instructor_rate_repo,
     )
 
 
