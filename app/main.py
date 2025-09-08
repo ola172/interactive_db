@@ -1,4 +1,5 @@
 from fastapi import FastAPI, Request
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from app.core.database import Database
@@ -12,6 +13,13 @@ from app.routers.user_routes import router as user_router
 
 app = FastAPI(title="Zedny API")
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # ✅ Global Exception Handlers
 @app.exception_handler(CustomException)
