@@ -119,3 +119,12 @@ async def add_or_update_instructor_rating(
         raise CustomHTTPException(status_code=e.status_code, detail=e.detail,
                                   exception_type=e.exception_type, additional_info=e.additional_info)
 
+
+@router.get('/enroll-num/{product_id}')
+async def number_of_student(product_id: uuid.UUID, service: UserService = Depends(get_user_service)):
+    try:
+        number = await service.number_of_student(product_id)
+        return {"student_number": number}
+    except CustomException as e:
+        raise CustomHTTPException(status_code=e.status_code, detail=e.detail,
+                                  exception_type=e.exception_type, additional_info=e.additional_info)

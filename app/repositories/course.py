@@ -5,6 +5,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
+from app.constant_manager import ProductType
 from app.models import Product, ProductSkill
 from app.models.course import CourseDetail, Chapter, Video, CourseInstructor
 from app.models.skill_objective import ProductObjective
@@ -73,6 +74,10 @@ class CourseDetailRepository(BaseRepository[CourseDetail]):
                 additional_info={"error": str(e), "product_id": str(product_id)},
             )
 
+    from uuid import UUID
+
+    COURSE_TYPE_ID = UUID("171db108-d3e3-43d9-9153-8692f34deada")
+
     async def get_all_course_product(
             self,
             page: int = 1,
@@ -102,6 +107,8 @@ class CourseDetailRepository(BaseRepository[CourseDetail]):
                     .selectinload(CourseDetail.chapters)
                     .selectinload(Chapter.videos),
                 )
+                # ✅ Always filter by type_id
+                .where(Product.type_id == ProductType.COURSES_ID)
                 .order_by(Product.average_rating.desc())
                 .offset((page - 1) * limit)
                 .limit(limit)
@@ -113,8 +120,10 @@ class CourseDetailRepository(BaseRepository[CourseDetail]):
 
             # Filter by instructor
             if instructor_id:
-                stmt = stmt.join(Product.course_detail).join(CourseDetail.instructors).where(
-                    CourseInstructor.instructor_id == instructor_id
+                stmt = (
+                    stmt.join(Product.course_detail)
+                    .join(CourseDetail.instructors)
+                    .where(CourseInstructor.instructor_id == instructor_id)
                 )
 
             # Filter by skill
@@ -147,9 +156,9 @@ class CourseDetailRepository(BaseRepository[CourseDetail]):
                     "category_id": str(category_id) if category_id else None,
                     "instructor_id": str(instructor_id) if instructor_id else None,
                     "skill_id": str(skill_id) if skill_id else None,
+                    "fixed_type_id": str(ProductType.COURSES_ID),
                 },
             )
-
 
 class ChapterRepository(BaseRepository[Chapter]):
     def __init__(self, db: AsyncSession):

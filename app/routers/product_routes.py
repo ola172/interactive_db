@@ -1,11 +1,12 @@
 from uuid import UUID
+
 from fastapi import APIRouter, Depends, Query
 
 from app.container import get_product_service
+from app.exceptions.custom_exception import CustomException, CustomHTTPException
 from app.schemas.product import ProductTypeCreate, ProductCategoryBase
 from app.schemas.skills_objectives import SkillObjectiveSchema
 from app.services import ProductService
-from app.exceptions.custom_exception import CustomException, CustomHTTPException
 
 product_router = APIRouter(prefix="/products", tags=["Products"])
 
@@ -41,6 +42,30 @@ async def read_product_categories(
         categories = await product_service.get_all_product_categories()
         results = [c.__dict__ for c in categories]
         return {"results": results}
+    except CustomException as e:
+        raise CustomHTTPException(
+            status_code=e.status_code,
+            detail=e.detail,
+            exception_type=e.exception_type,
+            additional_info=e.additional_info
+        )
+    except Exception as e:
+        raise CustomHTTPException(
+            status_code=500,
+            detail="Internal server error",
+            exception_type="InternalServerError",
+            additional_info={"error": str(e)}
+        )
+
+
+@product_router.get('/category/{category_id}')
+async def get_category_by_id(
+        category_id: UUID,
+        product_service: ProductService = Depends(get_product_service),
+):
+    try:
+        category = await product_service.get_product_category_by_id(category_id)
+        return category
     except CustomException as e:
         raise CustomHTTPException(
             status_code=e.status_code,
@@ -276,6 +301,28 @@ async def get_product_rating(
             additional_info={"error": str(e)}
         )
 
+@product_router.get("/{product_id}/ratings-reviews")
+async def get_product_ratings_and_reviews(
+        product_id: UUID,
+        product_service: ProductService = Depends(get_product_service)
+):
+    try:
+        results = await product_service.get_product_rate_and_review(product_id)
+        return {"results": results}
+    except CustomException as e:
+        raise CustomHTTPException(
+            status_code=e.status_code,
+            detail=e.detail,
+            exception_type=e.exception_type,
+            additional_info=e.additional_info
+        )
+    except Exception as e:
+        raise CustomHTTPException(
+            status_code=500,
+            detail="Internal server error",
+            exception_type="InternalServerError",
+            additional_info={"error": str(e)}
+        )
 
 @product_router.post("/levels")
 async def create_product_level(

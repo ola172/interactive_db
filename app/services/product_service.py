@@ -270,6 +270,19 @@ class ProductService:
                 additional_info={"error": str(e)},
             )
 
+    async def get_product_category_by_id(self, category_id: uuid.UUID) -> ProductCategory | None:
+        """Fetch a product category by its ID."""
+        try:
+            return await self.product_category_repo.get(category_id)
+        except CustomException as e:
+            raise e
+        except Exception as e:
+            raise ServiceException(
+                status_code=500,
+                detail="Failed to fetch product category by ID",
+                additional_info={"error": str(e), "category_id": str(category_id)},
+            )
+
     async def get_product_rating(self, product_id: uuid.UUID) -> float | None:
         """Get the average rating for a product."""
         try:
@@ -280,5 +293,18 @@ class ProductService:
             raise ServiceException(
                 status_code=500,
                 detail="Failed to fetch product rating",
+                additional_info={"error": str(e), "product_id": str(product_id)},
+            )
+
+    async def get_product_rate_and_review(self, product_id: uuid.UUID) -> Sequence:
+        """Get all ratings and reviews for a product."""
+        try:
+            return await self.product_rating_repository.get_product_rate_and_review(product_id)
+        except CustomException as e:
+            raise e
+        except Exception as e:
+            raise ServiceException(
+                status_code=500,
+                detail="Failed to fetch product ratings and reviews",
                 additional_info={"error": str(e), "product_id": str(product_id)},
             )

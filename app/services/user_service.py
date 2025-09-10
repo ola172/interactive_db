@@ -325,3 +325,25 @@ class UserService:
                     "review": review,
                 },
             )
+
+
+    async def number_of_student(self, product_id: uuid.UUID) -> int:
+        try:
+            stmt = select(UserProduct).where(
+                UserProduct.product_id == product_id,
+                UserProduct.status == EnrollmentStatus.in_progress
+            )
+            result = await self.db.execute(stmt)
+            students = result.scalars().all()
+            return len(students)
+        except CustomException as e:
+            raise e
+        except Exception as e:
+            raise ServiceException(
+                status_code=500,
+                detail="Failed to fetch number of students for product",
+                additional_info={
+                    "error": str(e),
+                    "product_id": str(product_id),
+                },
+            )

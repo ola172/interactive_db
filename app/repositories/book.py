@@ -5,6 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.orm import selectinload
 
+from app.constant_manager import ProductType
 from app.exceptions.repo_exception import RepoException
 from app.models import Product
 from app.models.book import BookVideoDetail, BookReadingDetail, BookSection, BookVideos
@@ -31,11 +32,14 @@ class BookVideoDetailsRepository(BaseRepository[BookVideoDetail]):
                     selectinload(Product.objectives),
                     selectinload(Product.level_obj),
                 )
+                # ✅ Always filter by BOOKS_ID
+                .where(Product.type_id == ProductType.BOOKS_ID)
                 .order_by(Product.average_rating.desc())
                 .offset((page - 1) * limit)
                 .limit(limit)
             )
 
+            # Optional filter by category
             if category_id:
                 stmt = stmt.where(Product.category_id == category_id)
 
@@ -50,12 +54,18 @@ class BookVideoDetailsRepository(BaseRepository[BookVideoDetail]):
                 }
                 for row in rows
             ]
+
         except Exception as e:
             raise RepoException(
                 status_code=500,
                 detail="Error retrieving book videos with details",
-                additional_info={"error": str(e), "page": page, "limit": limit,
-                                 "category_id": str(category_id) if category_id else None}
+                additional_info={
+                    "error": str(e),
+                    "page": page,
+                    "limit": limit,
+                    "category_id": str(category_id) if category_id else None,
+                    "fixed_type_id": str(ProductType.BOOKS_ID),
+                },
             )
 
     async def get_by_product_id_with_details(self, product_id: UUID) -> Optional[dict[str, Any]]:
