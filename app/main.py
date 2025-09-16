@@ -10,6 +10,8 @@ from app.routers.course_routes import course_router
 from app.routers.pathway_routes import pathway_router
 from app.routers.product_routes import product_router
 from app.routers.user_routes import router as user_router
+from app.routers.interactive_course_routes import interactive_course_router
+from app.routers.interactive_content_routes import interactive_content_router
 
 app = FastAPI(title="Zedny API")
 
@@ -65,6 +67,8 @@ app.include_router(instructor_router)
 app.include_router(book_router)
 app.include_router(user_router)
 app.include_router(pathway_router)
+app.include_router(interactive_course_router)
+app.include_router(interactive_content_router)
 
 # ✅ Initialize DB
 db = Database()

@@ -16,6 +16,11 @@ from app.repositories import (ProductTypeRepository, ProductRepository,
                               PathwayItemRepository,
                               ProductLevelRepository,
                               ProductCategoryRepository, BookVideoDetailsRepository)
+from app.repositories.interactive_repositories import (
+    InteractiveCourseDetailsRepository,
+    InteractiveChapterRepository,
+    InteractiveVideoRepository,
+)
 from app.repositories.instructor import InstructorRateRepository
 from app.repositories.user import UserRepository, UserProductRepository, UserWaitingListRepository
 from app.services import CourseService
@@ -25,6 +30,7 @@ from app.services.book_video_service import BookVideoService
 from app.services.instructor_service import InstructorService
 from app.services.pathway_service import PathwayService
 from app.services.user_service import UserService
+from app.services.interactive_course_service import InteractiveCourseService
 
 db = Database()
 
@@ -174,6 +180,25 @@ async def get_video_repository(
     yield VideoRepository(session)
 
 
+# Interactive repositories
+async def get_interactive_course_details_repository(
+        session: AsyncSession = Depends(get_db_session),
+) -> AsyncGenerator[InteractiveCourseDetailsRepository, Any]:
+    yield InteractiveCourseDetailsRepository(session)
+
+
+async def get_interactive_chapter_repository(
+        session: AsyncSession = Depends(get_db_session),
+) -> AsyncGenerator[InteractiveChapterRepository, Any]:
+    yield InteractiveChapterRepository(session)
+
+
+async def get_interactive_video_repository(
+        session: AsyncSession = Depends(get_db_session),
+) -> AsyncGenerator[InteractiveVideoRepository, Any]:
+    yield InteractiveVideoRepository(session)
+
+
 async def get_user_service(
         user_repo: UserRepository = Depends(get_user_repository),
         user_product_repo: UserProductRepository = Depends(get_user_product_repository),
@@ -288,4 +313,23 @@ async def get_book_video_service(
         product_skill_repo=product_skill_repo,
         product_objective_repo=product_objective_repo,
         db=book_video_details_repo.db,
+    )
+
+
+async def get_interactive_course_service(
+        course_detail_repo: InteractiveCourseDetailsRepository = Depends(get_interactive_course_details_repository),
+        chapter_repo: InteractiveChapterRepository = Depends(get_interactive_chapter_repository),
+        video_repo: InteractiveVideoRepository = Depends(get_interactive_video_repository),
+        product_repo: ProductRepository = Depends(get_product_repository),
+        product_skill_repo: ProductSkillRepository = Depends(get_product_skill_repository),
+        product_objective_repo: ProductObjectiveRepository = Depends(get_product_objective_repository),
+) -> AsyncGenerator["InteractiveCourseService", Any]:
+    yield InteractiveCourseService(
+        db=course_detail_repo.db,
+        course_detail_repo=course_detail_repo,
+        chapter_repo=chapter_repo,
+        video_repo=video_repo,
+        product_repo=product_repo,
+        product_skill_repo=product_skill_repo,
+        product_objective_repo=product_objective_repo,
     )
