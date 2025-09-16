@@ -96,6 +96,12 @@ class Product(Base):
         uselist=False,
         cascade="all, delete-orphan"
     )
+    interactive_course_detail = relationship(
+        "InteractiveCourseDetailsModel",
+        back_populates="product",
+        uselist=False,
+        cascade="all, delete-orphan"
+    )
     pathway = relationship("Pathway", back_populates="product", uselist=False)
     level_obj = relationship("Level", back_populates="products")
 
