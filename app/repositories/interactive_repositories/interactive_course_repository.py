@@ -10,6 +10,8 @@ from app.models import Product, ProductSkill
 from app.models.interactive_models.interactive_course_details_model import InteractiveCourseDetailsModel
 from app.models.interactive_models.interactive_chapter_model import InteractiveChapterModel
 from app.models.interactive_models.interactive_video_model import InteractiveVideoModel
+from app.models.interactive_models.keyword_models import VideoKeywordTypeStyleModel
+from app.models.interactive_models.paragraph_model import InteractiveParagraphModel
 from app.models.skill_objective import ProductObjective
 from app.repositories.base_repo import BaseRepository
 from app.exceptions.repo_exception import RepoException
@@ -107,7 +109,6 @@ class InteractiveCourseDetailsRepository(BaseRepository[InteractiveCourseDetails
 
             result = await self.db.execute(stmt)
             rows = result.all()
-
             return [
                 {
                     "product": row.Product,
@@ -185,6 +186,11 @@ class InteractiveVideoRepository(BaseRepository[InteractiveVideoModel]):
                 .options(
                     selectinload(InteractiveVideoModel.paragraphs),
                     selectinload(InteractiveVideoModel.type_styles),
+                    selectinload(InteractiveVideoModel.paragraphs).selectinload(InteractiveParagraphModel.paragraph_words),
+                    selectinload(InteractiveVideoModel.paragraphs).selectinload(InteractiveParagraphModel.paragraph_keywords),
+                    selectinload(InteractiveVideoModel.paragraphs).selectinload(InteractiveParagraphModel.paragraph_visual),
+                    selectinload(InteractiveVideoModel.type_styles).selectinload(VideoKeywordTypeStyleModel.type),
+
                 )
             )
             result = await self.db.execute(stmt)

@@ -1,23 +1,73 @@
-from .interactive_course_schema import (
-    InteractiveCourseDetailSchema,
+# Import from new separated files
+from .request_schemas import (
+    # Enums
+    VisualTypeEnum,
+    ChartTypeEnum,
+    
+    # Course request schemas
     InteractiveCourseCreateSchema,
     InteractiveCourseUpdateSchema,
-    InteractiveCourseResponse,
-    InteractiveChapterResponse,
-    InteractiveVideoResponse,
-    InteractiveVideoCreateSchema,
-    InteractiveChapterCreateSchema,
-    InteractiveVideoDetails,
     InteractiveChapterDetails,
-    InteractiveChapterUpdateSchema
+    
+    # Chapter request schemas
+    InteractiveChapterCreateSchema,
+    InteractiveChapterUpdateSchema,
+    
+    # Video request schemas
+    InteractiveVideoCreateSchema,
+    InteractiveVideoUpdateSchema,
+    
+    # Paragraph request schemas
+    InteractiveParagraphCreateSchema,
+    
+    # Word and keyword request schemas
+    InteractiveWordCreateSchema,
+    InteractiveKeywordCreateSchema,
+    InteractiveKeywordUpdateSchema,
+    VideoKeywordTypeStyleCreateSchema,
+    
+    # Visual data request schemas
+    TableDataCreateSchema,
+    ChartDataCreateSchema,
+    ImageDataCreateSchema,
+    VisualDataCreateSchema,
+    VisualDataUpdateSchema,
+    VideoKeywordTypeStyleUpdateSchema
 )
+
+from .response_schemas import (
+    # Course response schemas
+    InteractiveCourseResponse,
+    InteractiveCourseDetailSchema,
+    
+    # Chapter response schemas
+    InteractiveChapterResponse,
+    
+    # Video response schemas
+    InteractiveVideoResponse,
+    InteractiveVideoDetails,
+    
+    # Paragraph response schemas
+    InteractiveParagraphResponse,
+    
+    # Word and keyword response schemas
+    InteractiveWordResponse,
+    InteractiveKeywordResponse,
+    
+    # Visual data response schemas
+    TableDataResponse,
+    ChartDataResponse,
+    ImageDataResponse,
+    VisualDataResponse,
+)
+
+# Keep existing imports for backward compatibility
 from .interactive_paragraph_schema import (
     InteractiveParagraphSchema,
-    InteractiveParagraphResponse,
-    InteractiveParagraphCreateSchema,
+    InteractiveParagraphCreateSchema as InteractiveParagraphCreateSchemaOld,
     InteractiveWordSchema,
     InteractiveWordResponse,
-    InteractiveWordCreateSchema,
+    InteractiveWordCreateSchema as InteractiveWordCreateSchemaOld,
     WordTypeResponse,
     WordTypeCreateSchema,
     InteractiveParagraphWithDetailsResponse,
@@ -41,10 +91,10 @@ from .interactive_visual_schema import (
     VisualTypeCreateSchema,
     TableDataSchema,
     TableDataResponse,
-    TableDataCreateSchema,
+    TableDataCreateSchema as TableDataCreateSchemaOld,
     ChartDataSchema,
     ChartDataResponse,
-    ChartDataCreateSchema,
+    ChartDataCreateSchema as ChartDataCreateSchemaOld,
     ChartTypeResponse,
     ChartTypeCreateSchema,
     ImageSchema,
@@ -53,33 +103,47 @@ from .interactive_visual_schema import (
 )
 
 __all__ = [
+    # Enums
+    "VisualTypeEnum",
+    "ChartTypeEnum",
+    
     # Course schemas
-    "InteractiveCourseDetailSchema",
     "InteractiveCourseCreateSchema",
     "InteractiveCourseUpdateSchema",
     "InteractiveCourseResponse",
-    "InteractiveChapterResponse",
-    "InteractiveVideoResponse",
-    "InteractiveVideoCreateSchema",
-    "InteractiveChapterCreateSchema",
-    "InteractiveVideoDetails",
+    "InteractiveCourseDetailSchema",
     "InteractiveChapterDetails",
     
+    # Chapter schemas
+    "InteractiveChapterCreateSchema",
+    "InteractiveChapterUpdateSchema",
+    "InteractiveChapterResponse",
+    
+    # Video schemas
+    "InteractiveVideoCreateSchema",
+    "InteractiveVideoUpdateSchema",
+    "InteractiveVideoResponse",
+    "InteractiveVideoDetails",
+    
     # Paragraph schemas
-    "InteractiveParagraphSchema",
-    "InteractiveParagraphResponse",
     "InteractiveParagraphCreateSchema",
-    "InteractiveWordSchema",
-    "InteractiveWordResponse",
-    "InteractiveWordCreateSchema",
-    "WordTypeResponse",
-    "WordTypeCreateSchema",
+    "InteractiveParagraphResponse",
+    "InteractiveParagraphSchema",
     "InteractiveParagraphWithDetailsResponse",
     
-    # Keyword schemas
+    # Word and keyword schemas
+    "InteractiveWordCreateSchema",
+    "InteractiveWordResponse",
+    "InteractiveWordSchema",
+    "InteractiveKeywordCreateSchema",
+    "InteractiveKeywordUpdateSchema",
+    "InteractiveKeywordResponse",
+    "VideoKeywordTypeStyleCreateSchema",
     "InteractiveKeyWordSchema",
     "InteractiveKeyWordResponse",
     "InteractiveKeyWordCreateSchema",
+    "WordTypeResponse",
+    "WordTypeCreateSchema",
     "KeyWordTypeResponse",
     "KeyWordTypeCreateSchema",
     "VideoKeywordTypeStyleSchema",
@@ -87,18 +151,23 @@ __all__ = [
     "VideoKeywordTypeStyleCreateSchema",
     "KeyWordTypeWithStylesResponse",
     
-    # Visual schemas
+    # Visual data schemas
+    "TableDataCreateSchema",
+    "ChartDataCreateSchema",
+    "ImageDataCreateSchema",
+    "VisualDataCreateSchema",
+    "VisualDataUpdateSchema",
+    "TableDataResponse",
+    "ChartDataResponse",
+    "ImageDataResponse",
+    "VisualDataResponse",
     "VisualItemSchema",
     "VisualItemResponse",
     "VisualItemCreateSchema",
     "VisualTypeResponse",
     "VisualTypeCreateSchema",
     "TableDataSchema",
-    "TableDataResponse",
-    "TableDataCreateSchema",
     "ChartDataSchema",
-    "ChartDataResponse",
-    "ChartDataCreateSchema",
     "ChartTypeResponse",
     "ChartTypeCreateSchema",
     "ImageSchema",

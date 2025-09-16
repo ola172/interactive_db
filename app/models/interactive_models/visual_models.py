@@ -1,5 +1,5 @@
 import uuid
-from sqlalchemy import JSON, UUID, Column, Float, ForeignKey, Integer, String, Text
+from sqlalchemy import JSON, UUID, Column, Float, ForeignKey, String, Text
 from sqlalchemy.orm import relationship
 
 from app.core.database import Base
@@ -31,9 +31,10 @@ class TableDataModel(Base):
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     headers = Column(JSON, nullable=False)   # list of strings
-    data = Column(JSON, nullable=False)      # list of lists (rows)
-    title = Column(Text, nullable=False)
+    rows = Column(JSON, nullable=False)      # list of lists (rows)
+    title = Column(Text, nullable=True)
     caption = Column(Text, nullable=True)
+
 
     visual_item = relationship("VisualItemModel", back_populates="table", uselist=False)
 
@@ -43,7 +44,8 @@ class ChartDataModel(Base):
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     chart_type_id = Column(UUID(as_uuid=True), ForeignKey("chart_types.id"), nullable=False)
-    data = Column(JSON, nullable=False)      # labels + datasets as JSON
+    labels = Column(JSON, nullable=False)    # Chart labels as JSON array
+    data = Column(JSON, nullable=False)      # Chart data as JSON array (floats or tuples)
     title = Column(String, nullable=False)
 
     chart_type = relationship("ChartTypeModel", back_populates="charts")

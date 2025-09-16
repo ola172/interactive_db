@@ -29,7 +29,6 @@ class KeyWordTypeResponse(BaseModel):
 
 
 class KeyWordTypeCreateSchema(BaseModel):
-    style_id: Optional[uuid.UUID] = Field(default=None)
     name: str
 
 

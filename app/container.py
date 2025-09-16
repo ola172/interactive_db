@@ -20,8 +20,19 @@ from app.repositories.interactive_repositories import (
     InteractiveCourseDetailsRepository,
     InteractiveChapterRepository,
     InteractiveVideoRepository,
+    InteractiveParagraphRepository,
+    InteractiveWordRepository,
+    InteractiveKeyWordRepository,
+    KeyWordTypeRepository,
+    VideoKeywordTypeStyleRepository,
+    VisualItemRepository,
+    VisualTypeRepository,
+    TableDataRepository,
+    ChartDataRepository,
+    ImageRepository,
 )
 from app.repositories.instructor import InstructorRateRepository
+from app.repositories.interactive_repositories.interactive_visual_repository import ChartTypeRepository
 from app.repositories.user import UserRepository, UserProductRepository, UserWaitingListRepository
 from app.services import CourseService
 from app.services import ProductService
@@ -199,6 +210,70 @@ async def get_interactive_video_repository(
     yield InteractiveVideoRepository(session)
 
 
+async def get_interactive_paragraph_repository(
+        session: AsyncSession = Depends(get_db_session),
+) -> AsyncGenerator[InteractiveParagraphRepository, Any]:
+    yield InteractiveParagraphRepository(session)
+
+
+async def get_interactive_word_repository(
+        session: AsyncSession = Depends(get_db_session),
+) -> AsyncGenerator[InteractiveWordRepository, Any]:
+    yield InteractiveWordRepository(session)
+
+
+async def get_interactive_keyword_repository(
+        session: AsyncSession = Depends(get_db_session),
+) -> AsyncGenerator[InteractiveKeyWordRepository, Any]:
+    yield InteractiveKeyWordRepository(session)
+
+
+async def get_keyword_type_repository(
+        session: AsyncSession = Depends(get_db_session),
+) -> AsyncGenerator[KeyWordTypeRepository, Any]:
+    yield KeyWordTypeRepository(session)
+
+
+async def get_video_keyword_type_style_repository(
+        session: AsyncSession = Depends(get_db_session),
+) -> AsyncGenerator[VideoKeywordTypeStyleRepository, Any]:
+    yield VideoKeywordTypeStyleRepository(session)
+
+
+async def get_visual_item_repository(
+        session: AsyncSession = Depends(get_db_session),
+) -> AsyncGenerator[VisualItemRepository, Any]:
+    yield VisualItemRepository(session)
+
+
+async def get_visual_type_repository(
+        session: AsyncSession = Depends(get_db_session),
+) -> AsyncGenerator[VisualTypeRepository, Any]:
+    yield VisualTypeRepository(session)
+
+
+async def get_table_data_repository(
+        session: AsyncSession = Depends(get_db_session),
+) -> AsyncGenerator[TableDataRepository, Any]:
+    yield TableDataRepository(session)
+
+
+async def get_chart_data_repository(
+        session: AsyncSession = Depends(get_db_session),
+) -> AsyncGenerator[ChartDataRepository, Any]:
+    yield ChartDataRepository(session)
+
+
+async def get_image_repository(
+        session: AsyncSession = Depends(get_db_session),
+) -> AsyncGenerator[ImageRepository, Any]:
+    yield ImageRepository(session)
+
+async def get_chart_type_repo(
+        session: AsyncSession = Depends(get_db_session),
+) -> AsyncGenerator[ChartTypeRepository, Any]:
+    yield ChartTypeRepository(session)
+
 async def get_user_service(
         user_repo: UserRepository = Depends(get_user_repository),
         user_product_repo: UserProductRepository = Depends(get_user_product_repository),
@@ -323,6 +398,17 @@ async def get_interactive_course_service(
         product_repo: ProductRepository = Depends(get_product_repository),
         product_skill_repo: ProductSkillRepository = Depends(get_product_skill_repository),
         product_objective_repo: ProductObjectiveRepository = Depends(get_product_objective_repository),
+        paragraph_repo: InteractiveParagraphRepository = Depends(get_interactive_paragraph_repository),
+        word_repo: InteractiveWordRepository = Depends(get_interactive_word_repository),
+        keyword_repo: InteractiveKeyWordRepository = Depends(get_interactive_keyword_repository),
+        keyword_type_repo: KeyWordTypeRepository = Depends(get_keyword_type_repository),
+        keyword_style_repo: VideoKeywordTypeStyleRepository = Depends(get_video_keyword_type_style_repository),
+        visual_repo: VisualItemRepository = Depends(get_visual_item_repository),
+        visual_type_repo: VisualTypeRepository = Depends(get_visual_type_repository),
+        table_repo: TableDataRepository = Depends(get_table_data_repository),
+        chart_repo: ChartDataRepository = Depends(get_chart_data_repository),
+        image_repo: ImageRepository = Depends(get_image_repository),
+        chart_type_repo: ChartTypeRepository = Depends(get_chart_type_repo)
 ) -> AsyncGenerator["InteractiveCourseService", Any]:
     yield InteractiveCourseService(
         db=course_detail_repo.db,
@@ -332,4 +418,15 @@ async def get_interactive_course_service(
         product_repo=product_repo,
         product_skill_repo=product_skill_repo,
         product_objective_repo=product_objective_repo,
+        paragraph_repo=paragraph_repo,
+        word_repo=word_repo,
+        keyword_repo=keyword_repo,
+        keyword_type_repo=keyword_type_repo,
+        keyword_style_repo=keyword_style_repo,
+        visual_repo=visual_repo,
+        visual_type_repo=visual_type_repo,
+        table_repo=table_repo,
+        chart_repo=chart_repo,
+        image_repo=image_repo,
+        chart_type_repo=get_chart_type_repo
     )

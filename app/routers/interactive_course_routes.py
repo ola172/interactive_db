@@ -9,6 +9,7 @@ from app.schemas.interactive_schemas import (
     InteractiveChapterCreateSchema,
     InteractiveChapterUpdateSchema,
     InteractiveVideoCreateSchema,
+    InteractiveVideoUpdateSchema,
 )
 from app.services.interactive_course_service import InteractiveCourseService
 
@@ -318,11 +319,69 @@ async def create_video(
     interactive_course_service: InteractiveCourseService = Depends(get_interactive_course_service)
 ):
     """
-    Create a new video for an interactive chapter.
+    Create a new video for an interactive chapter with all paragraphs data.
     """
     try:
-        video = await interactive_course_service.create_video(video_data.model_dump())
+        video = await interactive_course_service.create_video(video_data)
         return {"results": video}
+    except CustomException as e:
+        raise CustomHTTPException(
+            status_code=e.status_code,
+            detail=e.detail,
+            exception_type=e.exception_type,
+            additional_info=e.additional_info,
+        )
+    except Exception as e:
+        raise CustomHTTPException(
+            status_code=500,
+            detail="Internal server error",
+            exception_type="InternalServerError",
+            additional_info={"error": str(e)},
+        )
+
+
+@interactive_course_router.put("/videos/{video_id}")
+async def update_video(
+    video_id: uuid.UUID,
+    video_update: InteractiveVideoUpdateSchema,
+    interactive_course_service: InteractiveCourseService = Depends(get_interactive_course_service)
+):
+    """
+    Update video metadata (not paragraphs).
+    """
+    try:
+        video = await interactive_course_service.update_video(video_id, video_update)
+        return {"results": video}
+    except CustomException as e:
+        raise CustomHTTPException(
+            status_code=e.status_code,
+            detail=e.detail,
+            exception_type=e.exception_type,
+            additional_info=e.additional_info,
+        )
+    except Exception as e:
+        raise CustomHTTPException(
+            status_code=500,
+            detail="Internal server error",
+            exception_type="InternalServerError",
+            additional_info={"error": str(e)},
+        )
+
+
+@interactive_course_router.delete("/videos/{video_id}")
+async def delete_video(
+    video_id: uuid.UUID,
+    interactive_course_service: InteractiveCourseService = Depends(get_interactive_course_service)
+):
+    """
+    Delete a video by its ID.
+    """
+    try:
+        success = await interactive_course_service.delete_video(video_id)
+        if success:
+            return {"message": "Video deleted successfully"}
+        else:
+            raise HTTPException(status_code=404, detail="Video not found")
     except CustomException as e:
         raise CustomHTTPException(
             status_code=e.status_code,

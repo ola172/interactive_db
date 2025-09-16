@@ -160,6 +160,53 @@ class ChartTypeRepository(BaseRepository[ChartTypeModel]):
                 additional_info={"error": str(e), "name": name},
             )
 
+    def validate_chart_data(self, chart_type_name: str, labels: list, data: list) -> dict:
+        """
+        Validate chart data based on chart type requirements.
+        Returns validation result with error details if any.
+        """
+        validation_result = {"valid": True, "errors": []}
+        
+        if chart_type_name == "pie":
+            # Pie charts require equal number of labels and data points
+            if len(labels) != len(data):
+                validation_result["valid"] = False
+                validation_result["errors"].append("Pie charts require equal number of labels and data points")
+            
+            # Pie chart data should be positive numbers
+            if not all(isinstance(d, (int, float)) and d >= 0 for d in data):
+                validation_result["valid"] = False
+                validation_result["errors"].append("Pie chart data must be positive numbers")
+        
+        elif chart_type_name in ["bar", "line"]:
+            # Bar and line charts require equal number of labels and data points
+            if len(labels) != len(data):
+                validation_result["valid"] = False
+                validation_result["errors"].append(f"{chart_type_name.title()} charts require equal number of labels and data points")
+            
+            # Data should be numeric
+            if not all(isinstance(d, (int, float)) for d in data):
+                validation_result["valid"] = False
+                validation_result["errors"].append(f"{chart_type_name.title()} chart data must be numeric")
+        
+        elif chart_type_name == "radar":
+            # Radar charts require at least 3 data points
+            if len(labels) < 3 or len(data) < 3:
+                validation_result["valid"] = False
+                validation_result["errors"].append("Radar charts require at least 3 data points")
+            
+            # Radar charts require equal number of labels and data points
+            if len(labels) != len(data):
+                validation_result["valid"] = False
+                validation_result["errors"].append("Radar charts require equal number of labels and data points")
+            
+            # Data should be numeric and positive
+            if not all(isinstance(d, (int, float)) and d >= 0 for d in data):
+                validation_result["valid"] = False
+                validation_result["errors"].append("Radar chart data must be positive numbers")
+        
+        return validation_result
+
 
 class ImageRepository(BaseRepository[ImageModel]):
     def __init__(self, db: AsyncSession):
