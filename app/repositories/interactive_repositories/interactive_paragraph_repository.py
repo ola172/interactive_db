@@ -8,6 +8,7 @@ from sqlalchemy.orm import selectinload
 from app.models.interactive_models.paragraph_model import InteractiveParagraphModel
 from app.models.interactive_models.paragraph_words_model import InteractiveWordModel, WordTypeModel
 from app.models.interactive_models.keyword_models import InteractiveKeyWordModel, KeyWordTypeModel
+from app.models.interactive_models.visual_models import VisualItemModel, ChartDataModel
 from app.repositories.base_repo import BaseRepository
 from app.exceptions.repo_exception import RepoException
 
@@ -23,9 +24,19 @@ class InteractiveParagraphRepository(BaseRepository[InteractiveParagraphModel]):
                 .where(InteractiveParagraphModel.video_id == video_id)
                 .order_by(InteractiveParagraphModel.view_index.asc())
                 .options(
-                    selectinload(InteractiveParagraphModel.paragraph_words),
-                    selectinload(InteractiveParagraphModel.paragraph_keywords),
-                    selectinload(InteractiveParagraphModel.paragraph_visual),
+                    selectinload(InteractiveParagraphModel.paragraph_words)
+                    .selectinload(InteractiveWordModel.type),
+                    selectinload(InteractiveParagraphModel.paragraph_keywords)
+                    .selectinload(InteractiveKeyWordModel.type),
+                    selectinload(InteractiveParagraphModel.paragraph_visual)
+                    .selectinload(VisualItemModel.visual_type),
+                    selectinload(InteractiveParagraphModel.paragraph_visual)
+                    .selectinload(VisualItemModel.table),
+                    selectinload(InteractiveParagraphModel.paragraph_visual)
+                    .selectinload(VisualItemModel.chart)
+                    .selectinload(ChartDataModel.chart_type),
+                    selectinload(InteractiveParagraphModel.paragraph_visual)
+                    .selectinload(VisualItemModel.image),
                 )
             )
             result = await self.db.execute(stmt)

@@ -970,4 +970,122 @@ class InteractiveContentService:
                 detail="Failed to delete chart type",
                 additional_info={"error": str(e), "chart_type_id": str(chart_type_id)},
             )
+    
+    # Visual Data Retrieval Methods
+    async def get_visual_data_by_id(self, visual_id: uuid.UUID) -> dict:
+        """Get visual data by visual_id with full content."""
+        try:
+            visual_item = await self.visual_repo.get(visual_id)
+            if not visual_item:
+                raise ServiceException(
+                    status_code=404,
+                    detail="Visual item not found",
+                    additional_info={"visual_id": str(visual_id)},
+                )
+            
+            # Get visual type to determine what data to fetch
+            visual_type = await self.visual_type_repo.get(visual_item.visual_type_id)
+            if not visual_type:
+                raise ServiceException(
+                    status_code=500,
+                    detail="Visual type not found",
+                    additional_info={"visual_type_id": str(visual_item.visual_type_id)},
+                )
+            
+            # Fetch the specific data based on visual type
+            specific_data = None
+            if visual_type.name == "table" and visual_item.table_id:
+                specific_data = await self.table_repo.get(visual_item.table_id)
+            elif visual_type.name == "chart" and visual_item.chart_id:
+                chart_data = await self.chart_repo.get(visual_item.chart_id)
+                if chart_data:
+                    chart_type = await self.chart_type_repo.get(chart_data.chart_type_id)
+                    specific_data = {
+                        "id": chart_data.id,
+                        "chart_type_id": chart_data.chart_type_id,
+                        "chart_type_name": chart_type.name if chart_type else None,
+                        "labels": chart_data.labels,
+                        "data": chart_data.data,
+                        "title": chart_data.title,
+                    }
+            elif visual_type.name == "image" and visual_item.image_id:
+                specific_data = await self.image_repo.get(visual_item.image_id)
+            
+            return {
+                "id": visual_item.id,
+                "visual_type_id": visual_item.visual_type_id,
+                "visual_type_name": visual_type.name,
+                "paragraph_id": visual_item.paragraph_id,
+                "start_time": visual_item.start_time,
+                "table_id": visual_item.table_id,
+                "chart_id": visual_item.chart_id,
+                "image_id": visual_item.image_id,
+                "data": specific_data.__dict__ if hasattr(specific_data, '__dict__') and not isinstance(specific_data, dict) else specific_data
+            }
+        except CustomException as e:
+            raise e
+        except Exception as e:
+            raise ServiceException(
+                status_code=500,
+                detail="Failed to get visual data by id",
+                additional_info={"error": str(e), "visual_id": str(visual_id)},
+            )
+    
+    async def get_visual_data_by_type_id(self, visual_type_id: uuid.UUID) -> list[dict]:
+        """Get all visual data items by visual_type_id."""
+        try:
+            # Get visual type first
+            visual_type = await self.visual_type_repo.get(visual_type_id)
+            if not visual_type:
+                raise ServiceException(
+                    status_code=404,
+                    detail="Visual type not found",
+                    additional_info={"visual_type_id": str(visual_type_id)},
+                )
+            
+            # Get all visual items for this type
+            visual_items = await self.visual_repo.get_visuals_by_type(visual_type.name)
+            
+            result = []
+            for visual_item in visual_items:
+                # Fetch the specific data for each visual item
+                specific_data = None
+                if visual_type.name == "table" and visual_item.table_id:
+                    specific_data = await self.table_repo.get(visual_item.table_id)
+                elif visual_type.name == "chart" and visual_item.chart_id:
+                    chart_data = await self.chart_repo.get(visual_item.chart_id)
+                    if chart_data:
+                        chart_type = await self.chart_type_repo.get(chart_data.chart_type_id)
+                        specific_data = {
+                            "id": chart_data.id,
+                            "chart_type_id": chart_data.chart_type_id,
+                            "chart_type_name": chart_type.name if chart_type else None,
+                            "labels": chart_data.labels,
+                            "data": chart_data.data,
+                            "title": chart_data.title,
+                        }
+                elif visual_type.name == "image" and visual_item.image_id:
+                    specific_data = await self.image_repo.get(visual_item.image_id)
+                
+                result.append({
+                    "id": visual_item.id,
+                    "visual_type_id": visual_item.visual_type_id,
+                    "visual_type_name": visual_type.name,
+                    "paragraph_id": visual_item.paragraph_id,
+                    "start_time": visual_item.start_time,
+                    "table_id": visual_item.table_id,
+                    "chart_id": visual_item.chart_id,
+                    "image_id": visual_item.image_id,
+                    "data": specific_data.__dict__ if hasattr(specific_data, '__dict__') and not isinstance(specific_data, dict) else specific_data
+                })
+            
+            return result
+        except CustomException as e:
+            raise e
+        except Exception as e:
+            raise ServiceException(
+                status_code=500,
+                detail="Failed to get visual data by type id",
+                additional_info={"error": str(e), "visual_type_id": str(visual_type_id)},
+            )
         

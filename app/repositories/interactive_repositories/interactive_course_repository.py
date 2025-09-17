@@ -10,8 +10,10 @@ from app.models import Product, ProductSkill
 from app.models.interactive_models.interactive_course_details_model import InteractiveCourseDetailsModel
 from app.models.interactive_models.interactive_chapter_model import InteractiveChapterModel
 from app.models.interactive_models.interactive_video_model import InteractiveVideoModel
-from app.models.interactive_models.keyword_models import VideoKeywordTypeStyleModel
+from app.models.interactive_models.keyword_models import VideoKeywordTypeStyleModel, InteractiveKeyWordModel
 from app.models.interactive_models.paragraph_model import InteractiveParagraphModel
+from app.models.interactive_models.paragraph_words_model import InteractiveWordModel
+from app.models.interactive_models.visual_models import VisualItemModel, ChartDataModel
 from app.models.skill_objective import ProductObjective
 from app.repositories.base_repo import BaseRepository
 from app.exceptions.repo_exception import RepoException
@@ -186,11 +188,26 @@ class InteractiveVideoRepository(BaseRepository[InteractiveVideoModel]):
                 .options(
                     selectinload(InteractiveVideoModel.paragraphs),
                     selectinload(InteractiveVideoModel.type_styles),
-                    selectinload(InteractiveVideoModel.paragraphs).selectinload(InteractiveParagraphModel.paragraph_words),
-                    selectinload(InteractiveVideoModel.paragraphs).selectinload(InteractiveParagraphModel.paragraph_keywords),
-                    selectinload(InteractiveVideoModel.paragraphs).selectinload(InteractiveParagraphModel.paragraph_visual),
+                    selectinload(InteractiveVideoModel.paragraphs)
+                    .selectinload(InteractiveParagraphModel.paragraph_words)
+                    .selectinload(InteractiveWordModel.type),
+                    selectinload(InteractiveVideoModel.paragraphs)
+                    .selectinload(InteractiveParagraphModel.paragraph_keywords)
+                    .selectinload(InteractiveKeyWordModel.type),
+                    selectinload(InteractiveVideoModel.paragraphs)
+                    .selectinload(InteractiveParagraphModel.paragraph_visual)
+                    .selectinload(VisualItemModel.visual_type),
+                    selectinload(InteractiveVideoModel.paragraphs)
+                    .selectinload(InteractiveParagraphModel.paragraph_visual)
+                    .selectinload(VisualItemModel.table),
+                    selectinload(InteractiveVideoModel.paragraphs)
+                    .selectinload(InteractiveParagraphModel.paragraph_visual)
+                    .selectinload(VisualItemModel.chart)
+                    .selectinload(ChartDataModel.chart_type),
+                    selectinload(InteractiveVideoModel.paragraphs)
+                    .selectinload(InteractiveParagraphModel.paragraph_visual)
+                    .selectinload(VisualItemModel.image),
                     selectinload(InteractiveVideoModel.type_styles).selectinload(VideoKeywordTypeStyleModel.type),
-
                 )
             )
             result = await self.db.execute(stmt)
