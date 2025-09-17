@@ -32,7 +32,7 @@ class TableDataModel(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     headers = Column(JSON, nullable=False)   # list of strings
     rows = Column(JSON, nullable=False)      # list of lists (rows)
-    title = Column(Text, nullable=True)
+    title = Column(Text, nullable=False)
     caption = Column(Text, nullable=True)
 
 

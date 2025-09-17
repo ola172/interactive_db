@@ -30,6 +30,7 @@ from app.repositories.interactive_repositories import (
     TableDataRepository,
     ChartDataRepository,
     ImageRepository,
+    WordTypeRepository,
 )
 from app.repositories.instructor import InstructorRateRepository
 from app.repositories.interactive_repositories.interactive_visual_repository import ChartTypeRepository
@@ -42,6 +43,7 @@ from app.services.instructor_service import InstructorService
 from app.services.pathway_service import PathwayService
 from app.services.user_service import UserService
 from app.services.interactive_course_service import InteractiveCourseService
+from app.services.interactive_content_service import InteractiveContentService
 
 db = Database()
 
@@ -232,6 +234,12 @@ async def get_keyword_type_repository(
         session: AsyncSession = Depends(get_db_session),
 ) -> AsyncGenerator[KeyWordTypeRepository, Any]:
     yield KeyWordTypeRepository(session)
+
+
+async def get_word_type_repository(
+        session: AsyncSession = Depends(get_db_session),
+) -> AsyncGenerator[WordTypeRepository, Any]:
+    yield WordTypeRepository(session)
 
 
 async def get_video_keyword_type_style_repository(
@@ -428,5 +436,34 @@ async def get_interactive_course_service(
         table_repo=table_repo,
         chart_repo=chart_repo,
         image_repo=image_repo,
-        chart_type_repo=get_chart_type_repo
+        chart_type_repo=chart_type_repo
+    )
+
+
+async def get_interactive_content_service(
+        paragraph_repo: InteractiveParagraphRepository = Depends(get_interactive_paragraph_repository),
+        word_type_repo: WordTypeRepository = Depends(get_word_type_repository),
+        keyword_repo: InteractiveKeyWordRepository = Depends(get_interactive_keyword_repository),
+        keyword_type_repo: KeyWordTypeRepository = Depends(get_keyword_type_repository),
+        video_keyword_style_repo: VideoKeywordTypeStyleRepository = Depends(get_video_keyword_type_style_repository),
+        visual_repo: VisualItemRepository = Depends(get_visual_item_repository),
+        visual_type_repo: VisualTypeRepository = Depends(get_visual_type_repository),
+        table_repo: TableDataRepository = Depends(get_table_data_repository),
+        chart_repo: ChartDataRepository = Depends(get_chart_data_repository),
+        chart_type_repo: ChartTypeRepository = Depends(get_chart_type_repo),
+        image_repo: ImageRepository = Depends(get_image_repository),
+) -> AsyncGenerator["InteractiveContentService", Any]:
+    yield InteractiveContentService(
+        db=paragraph_repo.db,
+        paragraph_repo=paragraph_repo,
+        word_type_repo=word_type_repo,
+        keyword_repo=keyword_repo,
+        keyword_type_repo=keyword_type_repo,
+        video_keyword_style_repo=video_keyword_style_repo,
+        visual_repo=visual_repo,
+        visual_type_repo=visual_type_repo,
+        table_repo=table_repo,
+        chart_repo=chart_repo,
+        chart_type_repo=chart_type_repo,
+        image_repo=image_repo,
     )

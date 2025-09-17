@@ -419,13 +419,13 @@ class InteractiveCourseService:
                     if paragraph_data.visual_data:
                         visual_data = paragraph_data.visual_data
                         
-                        # Get visual type ID by name
-                        visual_type = await self.visual_type_repo.get_by_name(visual_data.visual_type.value)
+                        # Get visual type by ID
+                        visual_type = await self.visual_type_repo.get(visual_data.visual_type_id)
                         if not visual_type:
                             raise ServiceException(
                                 status_code=400,
-                                detail=f"Visual type {visual_data.visual_type.value} not found",
-                                additional_info={"visual_type": visual_data.visual_type.value}
+                                detail=f"Visual type with ID {visual_data.visual_type_id} not found",
+                                additional_info={"visual_type_id": str(visual_data.visual_type_id)}
                             )
                         
                         # Create specific data type (table, chart, or image)
@@ -467,7 +467,7 @@ class InteractiveCourseService:
                         
                         # Create visual item linking to the specific data
                         visual_dict = {
-                            "visual_type_id": visual_type.id,
+                            "visual_type_id": visual_data.visual_type_id,
                             "paragraph_id": paragraph.id,
                             "start_time": visual_data.start_time,
                             "table_id": table_id,
@@ -740,13 +740,13 @@ class InteractiveCourseService:
         """
         try:
             async with self.db.begin():
-                # Get visual type by name
-                visual_type = await self.visual_type_repo.get_by_name(visual_data.visual_type.value)
+                # Get visual type by ID
+                visual_type = await self.visual_type_repo.get(visual_data.visual_type_id)
                 if not visual_type:
                     raise ServiceException(
                         status_code=400,
-                        detail=f"Visual type {visual_data.visual_type.value} not found",
-                        additional_info={"visual_type": visual_data.visual_type.value}
+                        detail=f"Visual type with ID {visual_data.visual_type_id} not found",
+                        additional_info={"visual_type_id": str(visual_data.visual_type_id)}
                     )
                 
                 # Create specific data type based on type
@@ -800,7 +800,7 @@ class InteractiveCourseService:
                 
                 # Create visual item linking to the specific data
                 visual_dict = {
-                    "visual_type_id": visual_type.id,
+                    "visual_type_id": visual_data.visual_type_id,
                     "paragraph_id": paragraph_id,
                     "start_time": visual_data.start_time,
                     "table_id": table_id,
@@ -849,15 +849,15 @@ class InteractiveCourseService:
                 if visual_data.start_time is not None:
                     visual_update_data["start_time"] = visual_data.start_time
                 
-                if visual_data.visual_type is not None:
-                    visual_type = await self.visual_type_repo.get_by_name(visual_data.visual_type.value)
+                if visual_data.visual_type_id is not None:
+                    visual_type = await self.visual_type_repo.get(visual_data.visual_type_id)
                     if not visual_type:
                         raise ServiceException(
                             status_code=400,
-                            detail=f"Visual type {visual_data.visual_type.value} not found",
-                            additional_info={"visual_type": visual_data.visual_type.value}
+                            detail=f"Visual type with ID {visual_data.visual_type_id} not found",
+                            additional_info={"visual_type_id": str(visual_data.visual_type_id)}
                         )
-                    visual_update_data["visual_type_id"] = visual_type.id
+                    visual_update_data["visual_type_id"] = visual_data.visual_type_id
                 
                 # Update specific data based on which type is provided
                 if visual_data.table_data and visual_item.table_id:

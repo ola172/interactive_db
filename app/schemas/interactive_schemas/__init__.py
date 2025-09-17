@@ -1,5 +1,5 @@
 # Import from new separated files
-from .request_schemas import (
+from .interactive_request_schemas import (
     # Enums
     VisualTypeEnum,
     ChartTypeEnum,
@@ -24,7 +24,15 @@ from .request_schemas import (
     InteractiveWordCreateSchema,
     InteractiveKeywordCreateSchema,
     InteractiveKeywordUpdateSchema,
-    VideoKeywordTypeStyleCreateSchema,
+    VideoKeywordTypeStyleUpdateSchema,
+    KeyWordTypeCreateSchema,
+    WordTypeCreateSchema,
+    KeyWordTypeUpdateSchema,
+    WordTypeUpdateSchema,
+    VisualTypeCreateSchema,
+    VisualTypeUpdateSchema,
+    ChartTypeCreateSchema,
+    ChartTypeUpdateSchema,
     
     # Visual data request schemas
     TableDataCreateSchema,
@@ -32,13 +40,11 @@ from .request_schemas import (
     ImageDataCreateSchema,
     VisualDataCreateSchema,
     VisualDataUpdateSchema,
-    VideoKeywordTypeStyleUpdateSchema
 )
 
-from .response_schemas import (
+from .interactive_response_schemas import (
     # Course response schemas
     InteractiveCourseResponse,
-    InteractiveCourseDetailSchema,
     
     # Chapter response schemas
     InteractiveChapterResponse,
@@ -61,47 +67,6 @@ from .response_schemas import (
     VisualDataResponse,
 )
 
-# Keep existing imports for backward compatibility
-from .interactive_paragraph_schema import (
-    InteractiveParagraphSchema,
-    InteractiveParagraphCreateSchema as InteractiveParagraphCreateSchemaOld,
-    InteractiveWordSchema,
-    InteractiveWordResponse,
-    InteractiveWordCreateSchema as InteractiveWordCreateSchemaOld,
-    WordTypeResponse,
-    WordTypeCreateSchema,
-    InteractiveParagraphWithDetailsResponse,
-)
-from .interactive_keyword_schema import (
-    InteractiveKeyWordSchema,
-    InteractiveKeyWordResponse,
-    InteractiveKeyWordCreateSchema,
-    KeyWordTypeResponse,
-    KeyWordTypeCreateSchema,
-    VideoKeywordTypeStyleSchema,
-    VideoKeywordTypeStyleResponse,
-    VideoKeywordTypeStyleCreateSchema,
-    KeyWordTypeWithStylesResponse,
-)
-from .interactive_visual_schema import (
-    VisualItemSchema,
-    VisualItemResponse,
-    VisualItemCreateSchema,
-    VisualTypeResponse,
-    VisualTypeCreateSchema,
-    TableDataSchema,
-    TableDataResponse,
-    TableDataCreateSchema as TableDataCreateSchemaOld,
-    ChartDataSchema,
-    ChartDataResponse,
-    ChartDataCreateSchema as ChartDataCreateSchemaOld,
-    ChartTypeResponse,
-    ChartTypeCreateSchema,
-    ImageSchema,
-    ImageResponse,
-    ImageCreateSchema,
-)
-
 __all__ = [
     # Enums
     "VisualTypeEnum",
@@ -111,7 +76,6 @@ __all__ = [
     "InteractiveCourseCreateSchema",
     "InteractiveCourseUpdateSchema",
     "InteractiveCourseResponse",
-    "InteractiveCourseDetailSchema",
     "InteractiveChapterDetails",
     
     # Chapter schemas
@@ -128,28 +92,16 @@ __all__ = [
     # Paragraph schemas
     "InteractiveParagraphCreateSchema",
     "InteractiveParagraphResponse",
-    "InteractiveParagraphSchema",
-    "InteractiveParagraphWithDetailsResponse",
     
     # Word and keyword schemas
     "InteractiveWordCreateSchema",
     "InteractiveWordResponse",
-    "InteractiveWordSchema",
     "InteractiveKeywordCreateSchema",
     "InteractiveKeywordUpdateSchema",
     "InteractiveKeywordResponse",
-    "VideoKeywordTypeStyleCreateSchema",
-    "InteractiveKeyWordSchema",
-    "InteractiveKeyWordResponse",
-    "InteractiveKeyWordCreateSchema",
-    "WordTypeResponse",
-    "WordTypeCreateSchema",
-    "KeyWordTypeResponse",
+    "VideoKeywordTypeStyleUpdateSchema",
     "KeyWordTypeCreateSchema",
-    "VideoKeywordTypeStyleSchema",
-    "VideoKeywordTypeStyleResponse",
-    "VideoKeywordTypeStyleCreateSchema",
-    "KeyWordTypeWithStylesResponse",
+    "WordTypeCreateSchema",
     
     # Visual data schemas
     "TableDataCreateSchema",
@@ -161,16 +113,4 @@ __all__ = [
     "ChartDataResponse",
     "ImageDataResponse",
     "VisualDataResponse",
-    "VisualItemSchema",
-    "VisualItemResponse",
-    "VisualItemCreateSchema",
-    "VisualTypeResponse",
-    "VisualTypeCreateSchema",
-    "TableDataSchema",
-    "ChartDataSchema",
-    "ChartTypeResponse",
-    "ChartTypeCreateSchema",
-    "ImageSchema",
-    "ImageResponse",
-    "ImageCreateSchema",
 ]

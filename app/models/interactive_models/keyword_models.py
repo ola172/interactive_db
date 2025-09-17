@@ -27,7 +27,7 @@ class KeyWordTypeModel(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4,
             unique=True, nullable=False, index=True)
     name = Column(Text, nullable=False)
-
+    description = Column(Text, nullable=True)
     # Relationships
     keywords = relationship("InteractiveKeyWordModel", back_populates="type")
     video_styles = relationship("VideoKeywordTypeStyleModel", back_populates="type", foreign_keys="VideoKeywordTypeStyleModel.keyword_type_id")

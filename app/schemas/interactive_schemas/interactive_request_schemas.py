@@ -25,8 +25,18 @@ class InteractiveWordCreateSchema(BaseModel):
     end_time: float
 
 
+class KeyWordTypeCreateSchema(BaseModel):
+    name: str
+    description: Optional[str] = None
+
+
+class WordTypeCreateSchema(BaseModel):
+    name: str
+    description: Optional[str] = None
+
+
 class InteractiveKeywordCreateSchema(BaseModel):
-    keyword_type_id: uuid.UUID  # Reference to KeyWordType by ID
+    keyword_type_id: uuid.UUID 
     word: str
 
 
@@ -35,16 +45,37 @@ class InteractiveKeywordUpdateSchema(BaseModel):
     keyword_type_id: Optional[uuid.UUID] = Field(default=None)
 
 
+class KeyWordTypeUpdateSchema(BaseModel):
+    name: Optional[str] = Field(default=None)
+    description: Optional[str] = Field(default=None)
+
+
+class WordTypeUpdateSchema(BaseModel):
+    name: Optional[str] = Field(default=None)
+    description: Optional[str] = Field(default=None)
+
+
+class VisualTypeCreateSchema(BaseModel):
+    name: str
+    description: Optional[str] = None
+
+
+class VisualTypeUpdateSchema(BaseModel):
+    name: Optional[str] = Field(default=None)
+    description: Optional[str] = Field(default=None)
+
+
+class ChartTypeCreateSchema(BaseModel):
+    name: str
+    description: Optional[str] = None
+
+
+class ChartTypeUpdateSchema(BaseModel):
+    name: Optional[str] = Field(default=None)
+    description: Optional[str] = Field(default=None)
+
+
 # Keyword Type Style Schema for Video
-class VideoKeywordTypeStyleCreateSchema(BaseModel):
-    keyword_type_id: uuid.UUID
-    color_light: str
-    color_dark: str
-    shadow_light: Optional[str] = Field(default=None)
-    shadow_dark: Optional[str] = Field(default=None)
-    size: int = Field(default=14)
-
-
 class VideoKeywordTypeStyleUpdateSchema(BaseModel):
     color_light: Optional[str] = Field(default=None)
     color_dark: Optional[str] = Field(default=None)
@@ -57,6 +88,8 @@ class VideoKeywordTypeStyleUpdateSchema(BaseModel):
 class TableDataCreateSchema(BaseModel):
     headers: List[str]
     rows: List[List[str]]
+    title: str
+    caption: Optional[str]
 
 
 class ChartDataCreateSchema(BaseModel):
@@ -73,7 +106,7 @@ class ImageDataCreateSchema(BaseModel):
 
 
 class VisualDataCreateSchema(BaseModel):
-    visual_type: VisualTypeEnum
+    visual_type_id: uuid.UUID
     start_time: float
     table_data: Optional[TableDataCreateSchema] = Field(default=None)
     chart_data: Optional[ChartDataCreateSchema] = Field(default=None)
@@ -81,7 +114,7 @@ class VisualDataCreateSchema(BaseModel):
 
 
 class VisualDataUpdateSchema(BaseModel):
-    visual_type: Optional[VisualTypeEnum] = Field(default=None)
+    visual_type_id: uuid.UUID
     start_time: Optional[float] = Field(default=None)
     table_data: Optional[TableDataCreateSchema] = Field(default=None)
     chart_data: Optional[ChartDataCreateSchema] = Field(default=None)
@@ -105,7 +138,7 @@ class InteractiveVideoCreateSchema(BaseModel):
     quiz_id: Optional[uuid.UUID] = Field(default=None)
     title: str
     url: str
-    video_duration: float  # Changed to float from str
+    video_duration: float
     view_index: int
     paragraphs: List[InteractiveParagraphCreateSchema] = Field(description="All paragraphs data is required")
 

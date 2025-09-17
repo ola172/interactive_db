@@ -1,10 +1,31 @@
 import uuid
 from typing import List, Optional
 from pydantic import BaseModel, Field
-from .request_schemas import VisualTypeEnum, ChartTypeEnum
+from .interactive_request_schemas import VisualTypeEnum, ChartTypeEnum
 
 
 # Word and Keyword Response Schemas
+class KeyWordTypeResponse(BaseModel):
+    id: uuid.UUID
+    style_id: Optional[uuid.UUID] = Field(default=None)
+    name: str
+
+    class Config:
+        from_attributes = True
+
+class VideoKeywordTypeStyleResponse(BaseModel):
+    id: uuid.UUID
+    video_id: uuid.UUID
+    keyword_type_id: uuid.UUID
+    color_light: str
+    color_dark: str
+    shadow_light: Optional[str] = Field(default=None)
+    shadow_dark: Optional[str] = Field(default=None)
+    size: int
+
+    class Config:
+        from_attributes = True
+
 class InteractiveWordResponse(BaseModel):
     id: uuid.UUID
     paragraph_id: uuid.UUID
@@ -28,10 +49,22 @@ class InteractiveKeywordResponse(BaseModel):
 
 
 # Visual Data Response Schemas
+
+class VisualTypeResponse(BaseModel):
+    id: uuid.UUID
+    name: str
+    description: Optional[str] = Field(default=None)
+
+    class Config:
+        from_attributes = True
+
+
 class TableDataResponse(BaseModel):
     id: uuid.UUID
     headers: List[str]
     rows: List[List[str]]
+    title: str
+    caption: Optional[str]
 
     class Config:
         from_attributes = True
@@ -135,27 +168,3 @@ class InteractiveCourseResponse(BaseModel):
 
     class Config:
         from_attributes = True
-
-
-class InteractiveCourseDetailSchema(BaseModel):
-    product_type_id: uuid.UUID
-    product_category_id: uuid.UUID
-    created_by: Optional[uuid.UUID]
-    level_id: Optional[uuid.UUID] = Field(default=None)
-    title: str
-    description: str
-    language: str
-    duration: str
-    chapters: List[InteractiveChapterResponse]
-    cover: Optional[str] = Field(default=None)
-    short_video: Optional[str] = Field(default=None)
-
-    video_count: Optional[int] = Field(default=None)
-    students_count: Optional[int] = Field(default=None)
-    pre_assessment_id: Optional[uuid.UUID] = Field(default=None)
-    final_exam_id: Optional[uuid.UUID] = Field(default=None)
-    certificate_included: Optional[bool] = Field(default=False)
-    view_index: Optional[int] = Field(default=None)
-
-    skills: Optional[List[uuid.UUID]] = Field(default=None)
-    objectives: Optional[List[uuid.UUID]] = Field(default=None)
