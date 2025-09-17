@@ -24,7 +24,7 @@ from .interactive_visual_repository import (
 
 __all__ = [
     "InteractiveCourseDetailsRepository",
-    "InteractiveChapterRepository", 
+    "InteractiveChapterRepository",
     "InteractiveVideoRepository",
     "InteractiveParagraphRepository",
     "InteractiveWordRepository",

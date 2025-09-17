@@ -36,7 +36,7 @@ class WordTypeCreateSchema(BaseModel):
 
 
 class InteractiveKeywordCreateSchema(BaseModel):
-    keyword_type_id: uuid.UUID 
+    keyword_type_id: uuid.UUID
     word: str
 
 
@@ -140,7 +140,9 @@ class InteractiveVideoCreateSchema(BaseModel):
     url: str
     video_duration: float
     view_index: int
-    paragraphs: List[InteractiveParagraphCreateSchema] = Field(description="All paragraphs data is required")
+    paragraphs: List[InteractiveParagraphCreateSchema] = Field(
+        description="All paragraphs data is required"
+    )
 
 
 class InteractiveVideoUpdateSchema(BaseModel):
@@ -189,11 +191,11 @@ class InteractiveCourseCreateSchema(BaseModel):
     duration: str
     cover: Optional[str] = Field(default=None)
     short_video: Optional[str] = Field(default=None)
-    
+
     # Interactive course specific fields
     pre_assessment_id: Optional[uuid.UUID] = Field(default=None)
     final_exam_id: Optional[uuid.UUID] = Field(default=None)
-    
+
     # Related data
     skills: Optional[List[uuid.UUID]] = Field(default=None)
     objectives: Optional[List[uuid.UUID]] = Field(default=None)
@@ -210,11 +212,11 @@ class InteractiveCourseUpdateSchema(BaseModel):
     duration: Optional[str] = Field(default=None)
     cover: Optional[str] = Field(default=None)
     short_video: Optional[str] = Field(default=None)
-    
+
     # Interactive course specific fields
     pre_assessment_id: Optional[uuid.UUID] = Field(default=None)
     final_exam_id: Optional[uuid.UUID] = Field(default=None)
-    
+
     # Related data
     skills: Optional[List[uuid.UUID]] = Field(default=None)
     objectives: Optional[List[uuid.UUID]] = Field(default=None)

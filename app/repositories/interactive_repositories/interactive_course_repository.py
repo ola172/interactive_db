@@ -7,10 +7,17 @@ from sqlalchemy.orm import selectinload
 
 from app.constant_manager import ProductType
 from app.models import Product, ProductSkill
-from app.models.interactive_models.interactive_course_details_model import InteractiveCourseDetailsModel
-from app.models.interactive_models.interactive_chapter_model import InteractiveChapterModel
+from app.models.interactive_models.interactive_course_details_model import (
+    InteractiveCourseDetailsModel,
+)
+from app.models.interactive_models.interactive_chapter_model import (
+    InteractiveChapterModel,
+)
 from app.models.interactive_models.interactive_video_model import InteractiveVideoModel
-from app.models.interactive_models.keyword_models import VideoKeywordTypeStyleModel, InteractiveKeyWordModel
+from app.models.interactive_models.keyword_models import (
+    VideoKeywordTypeStyleModel,
+    InteractiveKeyWordModel,
+)
 from app.models.interactive_models.paragraph_model import InteractiveParagraphModel
 from app.models.interactive_models.paragraph_words_model import InteractiveWordModel
 from app.models.interactive_models.visual_models import VisualItemModel, ChartDataModel
@@ -23,7 +30,9 @@ class InteractiveCourseDetailsRepository(BaseRepository[InteractiveCourseDetails
     def __init__(self, db: AsyncSession):
         super().__init__(InteractiveCourseDetailsModel, db)
 
-    async def get_interactive_course_product(self, product_id: UUID) -> dict[str, Any] | None:
+    async def get_interactive_course_product(
+        self, product_id: UUID
+    ) -> dict[str, Any] | None:
         try:
             stmt = (
                 select(
@@ -39,11 +48,12 @@ class InteractiveCourseDetailsRepository(BaseRepository[InteractiveCourseDetails
                     selectinload(Product.interactive_course_detail)
                     .selectinload(InteractiveCourseDetailsModel.chapters)
                     .selectinload(InteractiveChapterModel.videos),
-
-                    selectinload(Product.product_skills).selectinload(ProductSkill.skill),
-
-                    selectinload(Product.product_objectives).selectinload(ProductObjective.objective),
-
+                    selectinload(Product.product_skills).selectinload(
+                        ProductSkill.skill
+                    ),
+                    selectinload(Product.product_objectives).selectinload(
+                        ProductObjective.objective
+                    ),
                     selectinload(Product.level_obj),
                 )
             )
@@ -71,13 +81,12 @@ class InteractiveCourseDetailsRepository(BaseRepository[InteractiveCourseDetails
                 additional_info={"error": str(e), "product_id": str(product_id)},
             )
 
-
     async def get_all_interactive_course_product(
-            self,
-            page: int = 1,
-            limit: int = 10,
-            category_id: UUID | None = None,
-            skill_id: UUID | None = None,
+        self,
+        page: int = 1,
+        limit: int = 10,
+        category_id: UUID | None = None,
+        skill_id: UUID | None = None,
     ) -> list[dict[str, Any]]:
         try:
             stmt = (
@@ -93,8 +102,12 @@ class InteractiveCourseDetailsRepository(BaseRepository[InteractiveCourseDetails
                     selectinload(Product.interactive_course_detail)
                     .selectinload(InteractiveCourseDetailsModel.chapters)
                     .selectinload(InteractiveChapterModel.videos),
-                    selectinload(Product.product_skills).selectinload(ProductSkill.skill),
-                    selectinload(Product.product_objectives).selectinload(ProductObjective.objective),
+                    selectinload(Product.product_skills).selectinload(
+                        ProductSkill.skill
+                    ),
+                    selectinload(Product.product_objectives).selectinload(
+                        ProductObjective.objective
+                    ),
                     selectinload(Product.level_obj),
                 )
                 .where(Product.type_id == ProductType.INTERACTIVE_COURSES_ID)
@@ -107,7 +120,9 @@ class InteractiveCourseDetailsRepository(BaseRepository[InteractiveCourseDetails
                 stmt = stmt.where(Product.category_id == category_id)
 
             if skill_id:
-                stmt = stmt.join(Product.product_skills).where(ProductSkill.skill_id == skill_id)
+                stmt = stmt.join(Product.product_skills).where(
+                    ProductSkill.skill_id == skill_id
+                )
 
             result = await self.db.execute(stmt)
             rows = result.all()
@@ -122,7 +137,7 @@ class InteractiveCourseDetailsRepository(BaseRepository[InteractiveCourseDetails
                 }
                 for row in rows
             ]
-        
+
         except Exception as e:
             raise RepoException(
                 status_code=500,
@@ -142,7 +157,9 @@ class InteractiveChapterRepository(BaseRepository[InteractiveChapterModel]):
     def __init__(self, db: AsyncSession):
         super().__init__(InteractiveChapterModel, db)
 
-    async def get_chapters_by_course_id(self, course_id: UUID) -> Sequence[InteractiveChapterModel]:
+    async def get_chapters_by_course_id(
+        self, course_id: UUID
+    ) -> Sequence[InteractiveChapterModel]:
         try:
             stmt = (
                 select(InteractiveChapterModel)
@@ -164,7 +181,9 @@ class InteractiveVideoRepository(BaseRepository[InteractiveVideoModel]):
     def __init__(self, db: AsyncSession):
         super().__init__(InteractiveVideoModel, db)
 
-    async def get_videos_by_chapter_id(self, chapter_id: UUID) -> Sequence[InteractiveVideoModel]:
+    async def get_videos_by_chapter_id(
+        self, chapter_id: UUID
+    ) -> Sequence[InteractiveVideoModel]:
         try:
             stmt = (
                 select(InteractiveVideoModel)
@@ -180,7 +199,9 @@ class InteractiveVideoRepository(BaseRepository[InteractiveVideoModel]):
                 additional_info={"error": str(e), "chapter_id": str(chapter_id)},
             )
 
-    async def get_video_with_paragraphs(self, video_id: UUID) -> InteractiveVideoModel | None:
+    async def get_video_with_paragraphs(
+        self, video_id: UUID
+    ) -> InteractiveVideoModel | None:
         try:
             stmt = (
                 select(InteractiveVideoModel)
@@ -207,7 +228,9 @@ class InteractiveVideoRepository(BaseRepository[InteractiveVideoModel]):
                     selectinload(InteractiveVideoModel.paragraphs)
                     .selectinload(InteractiveParagraphModel.paragraph_visual)
                     .selectinload(VisualItemModel.image),
-                    selectinload(InteractiveVideoModel.type_styles).selectinload(VideoKeywordTypeStyleModel.type),
+                    selectinload(InteractiveVideoModel.type_styles).selectinload(
+                        VideoKeywordTypeStyleModel.type
+                    ),
                 )
             )
             result = await self.db.execute(stmt)

@@ -37,17 +37,19 @@ from app.schemas.interactive_schemas import (
 
 class VisualDataHandler(ABC):
     """Abstract base class for visual data handlers"""
-    
+
     @abstractmethod
     async def create(self, data: Dict[str, Any], repos: Dict[str, Any]) -> uuid.UUID:
         """Create visual data and return the ID"""
         pass
-    
+
     @abstractmethod
-    async def update(self, item_id: uuid.UUID, data: Dict[str, Any], repos: Dict[str, Any]) -> bool:
+    async def update(
+        self, item_id: uuid.UUID, data: Dict[str, Any], repos: Dict[str, Any]
+    ) -> bool:
         """Update visual data"""
         pass
-    
+
     @abstractmethod
     async def delete(self, item_id: uuid.UUID, repos: Dict[str, Any]) -> bool:
         """Delete visual data"""
@@ -56,7 +58,7 @@ class VisualDataHandler(ABC):
 
 class TableDataHandler(VisualDataHandler):
     """Handler for table visual data"""
-    
+
     async def create(self, data: Dict[str, Any], repos: Dict[str, Any]) -> uuid.UUID:
         table_dict = {
             "headers": data.get("headers", []),
@@ -66,8 +68,10 @@ class TableDataHandler(VisualDataHandler):
         }
         table = await repos["table_repo"].create(table_dict)
         return table.id
-    
-    async def update(self, item_id: uuid.UUID, data: Dict[str, Any], repos: Dict[str, Any]) -> bool:
+
+    async def update(
+        self, item_id: uuid.UUID, data: Dict[str, Any], repos: Dict[str, Any]
+    ) -> bool:
         table_update_data = {
             "headers": data.get("headers"),
             "rows": data.get("rows"),
@@ -75,19 +79,21 @@ class TableDataHandler(VisualDataHandler):
             "caption": data.get("caption"),
         }
         # Remove None values
-        table_update_data = {k: v for k, v in table_update_data.items() if v is not None}
+        table_update_data = {
+            k: v for k, v in table_update_data.items() if v is not None
+        }
         if table_update_data:
             result = await repos["table_repo"].update(item_id, table_update_data)
             return result is not None
         return True
-    
+
     async def delete(self, item_id: uuid.UUID, repos: Dict[str, Any]) -> bool:
         return await repos["table_repo"].delete(item_id)
 
 
 class ChartDataHandler(VisualDataHandler):
     """Handler for chart visual data"""
-    
+
     async def create(self, data: Dict[str, Any], repos: Dict[str, Any]) -> uuid.UUID:
         chart_dict = {
             "chart_type_id": data.get("chart_type_id"),
@@ -97,8 +103,10 @@ class ChartDataHandler(VisualDataHandler):
         }
         chart = await repos["chart_repo"].create(chart_dict)
         return chart.id
-    
-    async def update(self, item_id: uuid.UUID, data: Dict[str, Any], repos: Dict[str, Any]) -> bool:
+
+    async def update(
+        self, item_id: uuid.UUID, data: Dict[str, Any], repos: Dict[str, Any]
+    ) -> bool:
         chart_update_data = {
             "chart_type_id": data.get("chart_type_id"),
             "labels": data.get("labels"),
@@ -106,19 +114,21 @@ class ChartDataHandler(VisualDataHandler):
             "title": data.get("title"),
         }
         # Remove None values
-        chart_update_data = {k: v for k, v in chart_update_data.items() if v is not None}
+        chart_update_data = {
+            k: v for k, v in chart_update_data.items() if v is not None
+        }
         if chart_update_data:
             result = await repos["chart_repo"].update(item_id, chart_update_data)
             return result is not None
         return True
-    
+
     async def delete(self, item_id: uuid.UUID, repos: Dict[str, Any]) -> bool:
         return await repos["chart_repo"].delete(item_id)
 
 
 class ImageDataHandler(VisualDataHandler):
     """Handler for image visual data"""
-    
+
     async def create(self, data: Dict[str, Any], repos: Dict[str, Any]) -> uuid.UUID:
         image_dict = {
             "url": data.get("url", ""),
@@ -127,34 +137,38 @@ class ImageDataHandler(VisualDataHandler):
         }
         image = await repos["image_repo"].create(image_dict)
         return image.id
-    
-    async def update(self, item_id: uuid.UUID, data: Dict[str, Any], repos: Dict[str, Any]) -> bool:
+
+    async def update(
+        self, item_id: uuid.UUID, data: Dict[str, Any], repos: Dict[str, Any]
+    ) -> bool:
         image_update_data = {
             "url": data.get("url"),
             "alt_text": data.get("alt_text"),
             "title": data.get("caption"),
         }
         # Remove None values
-        image_update_data = {k: v for k, v in image_update_data.items() if v is not None}
+        image_update_data = {
+            k: v for k, v in image_update_data.items() if v is not None
+        }
         if image_update_data:
             result = await repos["image_repo"].update(item_id, image_update_data)
             return result is not None
         return True
-    
+
     async def delete(self, item_id: uuid.UUID, repos: Dict[str, Any]) -> bool:
         return await repos["image_repo"].delete(item_id)
 
 
 class VisualDataRegistry:
     """Registry for visual data handlers using the registry pattern"""
-    
+
     def __init__(self):
         self._handlers: Dict[str, VisualDataHandler] = {
             "table": TableDataHandler(),
             "chart": ChartDataHandler(),
             "image": ImageDataHandler(),
         }
-    
+
     def get_handler(self, visual_type: str) -> VisualDataHandler:
         """Get the appropriate handler for a visual type"""
         handler = self._handlers.get(visual_type.lower())
@@ -162,10 +176,10 @@ class VisualDataRegistry:
             raise ServiceException(
                 status_code=400,
                 detail=f"Unsupported visual type: {visual_type}",
-                additional_info={"supported_types": list(self._handlers.keys())}
+                additional_info={"supported_types": list(self._handlers.keys())},
             )
         return handler
-    
+
     def register_handler(self, visual_type: str, handler: VisualDataHandler):
         """Register a new visual data handler"""
         self._handlers[visual_type.lower()] = handler
@@ -199,10 +213,10 @@ class InteractiveContentService:
         self.chart_repo = chart_repo
         self.chart_type_repo = chart_type_repo
         self.image_repo = image_repo
-        
+
         # Initialize visual data registry
         self.visual_registry = VisualDataRegistry()
-    
+
     async def get_paragraphs_by_video(self, video_id: uuid.UUID) -> list[dict]:
         """Get all paragraphs for a specific video with interactive content."""
         try:
@@ -216,11 +230,13 @@ class InteractiveContentService:
                 detail="Failed to get paragraphs by video",
                 additional_info={"error": str(e), "video_id": str(video_id)},
             )
-    
+
     async def get_paragraph_with_details(self, paragraph_id: uuid.UUID) -> dict:
         """Get a paragraph with all its interactive details (words, keywords, visuals)."""
         try:
-            paragraph = await self.paragraph_repo.get_paragraph_with_details(paragraph_id)
+            paragraph = await self.paragraph_repo.get_paragraph_with_details(
+                paragraph_id
+            )
             if not paragraph:
                 raise ServiceException(
                     status_code=404,
@@ -236,16 +252,20 @@ class InteractiveContentService:
                 detail="Failed to get paragraph details",
                 additional_info={"error": str(e), "paragraph_id": str(paragraph_id)},
             )
-    
-    async def create_keyword(self, paragraph_id: uuid.UUID, keyword_data: InteractiveKeywordCreateSchema) -> dict:
+
+    async def create_keyword(
+        self, paragraph_id: uuid.UUID, keyword_data: InteractiveKeywordCreateSchema
+    ) -> dict:
         """Create a new interactive keyword for a specific paragraph."""
         try:
             async with self.db.begin():
                 # Add paragraph_id to the keyword data and map keyword_type_id to type_id
                 keyword_dict = keyword_data.model_dump()
                 keyword_dict["paragraph_id"] = paragraph_id
-                keyword_dict["type_id"] = keyword_dict.pop("keyword_type_id")  # Remove keyword_type_id and use type_id
-                
+                keyword_dict["type_id"] = keyword_dict.pop(
+                    "keyword_type_id"
+                )  # Remove keyword_type_id and use type_id
+
                 keyword = await self.keyword_repo.create(keyword_dict)
                 return {
                     "id": keyword.id,
@@ -259,13 +279,19 @@ class InteractiveContentService:
             raise ServiceException(
                 status_code=500,
                 detail="Failed to create keyword",
-                additional_info={"error": str(e), "paragraph_id": str(paragraph_id), "data": keyword_data.model_dump()},
+                additional_info={
+                    "error": str(e),
+                    "paragraph_id": str(paragraph_id),
+                    "data": keyword_data.model_dump(),
+                },
             )
-    
+
     async def get_keywords_by_paragraph(self, paragraph_id: uuid.UUID) -> list[dict]:
         """Get all keywords for a specific paragraph."""
         try:
-            keywords = await self.keyword_repo.get_keywords_by_paragraph_id(paragraph_id)
+            keywords = await self.keyword_repo.get_keywords_by_paragraph_id(
+                paragraph_id
+            )
             return keywords
         except CustomException as e:
             raise e
@@ -275,8 +301,10 @@ class InteractiveContentService:
                 detail="Failed to get keywords by paragraph",
                 additional_info={"error": str(e), "paragraph_id": str(paragraph_id)},
             )
-    
-    async def update_keyword(self, keyword_id: uuid.UUID, keyword_update: InteractiveKeywordUpdateSchema) -> dict:
+
+    async def update_keyword(
+        self, keyword_id: uuid.UUID, keyword_update: InteractiveKeywordUpdateSchema
+    ) -> dict:
         """Update keyword (name, type, style)."""
         try:
             async with self.db.begin():
@@ -285,14 +313,14 @@ class InteractiveContentService:
                     update_data["word"] = keyword_update.word
                 if keyword_update.keyword_type_id is not None:
                     update_data["type_id"] = keyword_update.keyword_type_id
-                
+
                 if not update_data:
                     raise ServiceException(
                         status_code=400,
                         detail="No fields to update",
                         additional_info={"keyword_id": str(keyword_id)},
                     )
-                
+
                 keyword = await self.keyword_repo.update(keyword_id, update_data)
                 if not keyword:
                     raise ServiceException(
@@ -300,7 +328,7 @@ class InteractiveContentService:
                         detail="Keyword not found",
                         additional_info={"keyword_id": str(keyword_id)},
                     )
-                
+
                 return {
                     "id": keyword.id,
                     "paragraph_id": keyword.paragraph_id,
@@ -315,7 +343,7 @@ class InteractiveContentService:
                 detail="Failed to update keyword",
                 additional_info={"error": str(e), "keyword_id": str(keyword_id)},
             )
-    
+
     async def delete_keyword(self, keyword_id: uuid.UUID) -> bool:
         """Delete a keyword item."""
         try:
@@ -336,7 +364,7 @@ class InteractiveContentService:
                 detail="Failed to delete keyword",
                 additional_info={"error": str(e), "keyword_id": str(keyword_id)},
             )
-    
+
     async def get_visual_by_paragraph(self, paragraph_id: uuid.UUID) -> Optional[dict]:
         """Get the visual item for a specific paragraph."""
         try:
@@ -350,30 +378,36 @@ class InteractiveContentService:
                 detail="Failed to get visual by paragraph",
                 additional_info={"error": str(e), "paragraph_id": str(paragraph_id)},
             )
-    
-    async def create_visual_data(self, paragraph_id: uuid.UUID, visual_data: VisualDataCreateSchema) -> dict:
+
+    async def create_visual_data(
+        self, paragraph_id: uuid.UUID, visual_data: VisualDataCreateSchema
+    ) -> dict:
         """Create visual data using registry pattern to determine handler based on visual_type_id."""
         try:
             async with self.db.begin():
                 # Get visual type by ID
-                visual_type = await self.visual_type_repo.get(visual_data.visual_type_id)
+                visual_type = await self.visual_type_repo.get(
+                    visual_data.visual_type_id
+                )
                 if not visual_type:
                     raise ServiceException(
                         status_code=400,
                         detail="Visual type not found",
-                        additional_info={"visual_type_id": str(visual_data.visual_type_id)}
+                        additional_info={
+                            "visual_type_id": str(visual_data.visual_type_id)
+                        },
                     )
-                
+
                 # Get the appropriate handler for this visual type
                 handler = self.visual_registry.get_handler(visual_type.name)
-                
+
                 # Prepare repositories for handler
                 repos = {
                     "table_repo": self.table_repo,
                     "chart_repo": self.chart_repo,
                     "image_repo": self.image_repo,
                 }
-                
+
                 # Determine which data to use based on visual type
                 data_to_use = {}
                 if visual_type.name == "table" and visual_data.table_data:
@@ -386,23 +420,29 @@ class InteractiveContentService:
                     raise ServiceException(
                         status_code=400,
                         detail=f"No {visual_type.name} data provided for {visual_type.name} visual type",
-                        additional_info={"visual_type": visual_type.name}
+                        additional_info={"visual_type": visual_type.name},
                     )
-                
+
                 # Create the specific data using the handler
                 specific_data_id = await handler.create(data_to_use, repos)
-                
+
                 # Create visual item linking to the specific data
                 visual_dict = {
                     "visual_type_id": visual_data.visual_type_id,
                     "paragraph_id": paragraph_id,
                     "start_time": visual_data.start_time,
-                    "table_id": specific_data_id if visual_type.name == "table" else None,
-                    "chart_id": specific_data_id if visual_type.name == "chart" else None,
-                    "image_id": specific_data_id if visual_type.name == "image" else None,
+                    "table_id": (
+                        specific_data_id if visual_type.name == "table" else None
+                    ),
+                    "chart_id": (
+                        specific_data_id if visual_type.name == "chart" else None
+                    ),
+                    "image_id": (
+                        specific_data_id if visual_type.name == "image" else None
+                    ),
                 }
                 visual_item = await self.visual_repo.create(visual_dict)
-                
+
                 await self.db.flush()
                 return {
                     "id": visual_item.id,
@@ -421,8 +461,10 @@ class InteractiveContentService:
                 detail="Failed to create visual data",
                 additional_info={"error": str(e), "paragraph_id": str(paragraph_id)},
             )
-    
-    async def update_visual_data(self, visual_id: uuid.UUID, visual_update: VisualDataUpdateSchema) -> dict:
+
+    async def update_visual_data(
+        self, visual_id: uuid.UUID, visual_update: VisualDataUpdateSchema
+    ) -> dict:
         """Update visual data using registry pattern."""
         try:
             async with self.db.begin():
@@ -434,26 +476,32 @@ class InteractiveContentService:
                         detail="Visual item not found",
                         additional_info={"visual_id": str(visual_id)},
                     )
-                
+
                 # Update visual item basic fields
                 visual_update_data = {}
                 if visual_update.visual_type_id is not None:
                     visual_update_data["visual_type_id"] = visual_update.visual_type_id
                 if visual_update.start_time is not None:
                     visual_update_data["start_time"] = visual_update.start_time
-                
+
                 if visual_update_data:
-                    visual_item = await self.visual_repo.update(visual_id, visual_update_data)
-                
+                    visual_item = await self.visual_repo.update(
+                        visual_id, visual_update_data
+                    )
+
                 # Get visual type to determine handler
-                visual_type = await self.visual_type_repo.get(visual_item.visual_type_id)
+                visual_type = await self.visual_type_repo.get(
+                    visual_item.visual_type_id
+                )
                 if not visual_type:
                     raise ServiceException(
                         status_code=400,
                         detail="Visual type not found",
-                        additional_info={"visual_type_id": str(visual_item.visual_type_id)}
+                        additional_info={
+                            "visual_type_id": str(visual_item.visual_type_id)
+                        },
                     )
-                
+
                 # Update specific data if provided
                 handler = self.visual_registry.get_handler(visual_type.name)
                 repos = {
@@ -461,15 +509,39 @@ class InteractiveContentService:
                     "chart_repo": self.chart_repo,
                     "image_repo": self.image_repo,
                 }
-                
+
                 # Update the specific data based on type
-                if visual_type.name == "table" and visual_update.table_data and visual_item.table_id:
-                    await handler.update(visual_item.table_id, visual_update.table_data.model_dump(), repos)
-                elif visual_type.name == "chart" and visual_update.chart_data and visual_item.chart_id:
-                    await handler.update(visual_item.chart_id, visual_update.chart_data.model_dump(), repos)
-                elif visual_type.name == "image" and visual_update.image_data and visual_item.image_id:
-                    await handler.update(visual_item.image_id, visual_update.image_data.model_dump(), repos)
-                
+                if (
+                    visual_type.name == "table"
+                    and visual_update.table_data
+                    and visual_item.table_id
+                ):
+                    await handler.update(
+                        visual_item.table_id,
+                        visual_update.table_data.model_dump(),
+                        repos,
+                    )
+                elif (
+                    visual_type.name == "chart"
+                    and visual_update.chart_data
+                    and visual_item.chart_id
+                ):
+                    await handler.update(
+                        visual_item.chart_id,
+                        visual_update.chart_data.model_dump(),
+                        repos,
+                    )
+                elif (
+                    visual_type.name == "image"
+                    and visual_update.image_data
+                    and visual_item.image_id
+                ):
+                    await handler.update(
+                        visual_item.image_id,
+                        visual_update.image_data.model_dump(),
+                        repos,
+                    )
+
                 await self.db.flush()
                 return {
                     "id": visual_item.id,
@@ -488,7 +560,7 @@ class InteractiveContentService:
                 detail="Failed to update visual data",
                 additional_info={"error": str(e), "visual_id": str(visual_id)},
             )
-    
+
     async def delete_visual_data(self, visual_id: uuid.UUID) -> bool:
         """Delete visual data using registry pattern."""
         try:
@@ -501,9 +573,11 @@ class InteractiveContentService:
                         detail="Visual item not found",
                         additional_info={"visual_id": str(visual_id)},
                     )
-                
+
                 # Get visual type to determine handler
-                visual_type = await self.visual_type_repo.get(visual_item.visual_type_id)
+                visual_type = await self.visual_type_repo.get(
+                    visual_item.visual_type_id
+                )
                 if visual_type:
                     handler = self.visual_registry.get_handler(visual_type.name)
                     repos = {
@@ -511,7 +585,7 @@ class InteractiveContentService:
                         "chart_repo": self.chart_repo,
                         "image_repo": self.image_repo,
                     }
-                    
+
                     # Delete the specific data first
                     if visual_item.table_id:
                         await handler.delete(visual_item.table_id, repos)
@@ -519,7 +593,7 @@ class InteractiveContentService:
                         await handler.delete(visual_item.chart_id, repos)
                     elif visual_item.image_id:
                         await handler.delete(visual_item.image_id, repos)
-                
+
                 # Then delete the visual item
                 success = await self.visual_repo.delete(visual_id)
                 if not success:
@@ -537,11 +611,13 @@ class InteractiveContentService:
                 detail="Failed to delete visual data",
                 additional_info={"error": str(e), "visual_id": str(visual_id)},
             )
-    
+
     async def get_video_keyword_styles(self, video_id: uuid.UUID) -> list[dict]:
         """Get all keyword styles for a specific video."""
         try:
-            styles = await self.video_keyword_style_repo.get_styles_by_video_id(video_id)
+            styles = await self.video_keyword_style_repo.get_styles_by_video_id(
+                video_id
+            )
             return [
                 {
                     "id": style.id,
@@ -564,15 +640,17 @@ class InteractiveContentService:
                 detail="Failed to get video keyword styles",
                 additional_info={"error": str(e), "video_id": str(video_id)},
             )
-    
-    
-    
+
     # Keyword Type CRUD operations
-    async def create_keyword_type(self, keyword_type_data: KeyWordTypeCreateSchema) -> dict:
+    async def create_keyword_type(
+        self, keyword_type_data: KeyWordTypeCreateSchema
+    ) -> dict:
         """Create a new keyword type."""
         try:
             async with self.db.begin():
-                keyword_type = await self.keyword_type_repo.create(keyword_type_data.model_dump())
+                keyword_type = await self.keyword_type_repo.create(
+                    keyword_type_data.model_dump()
+                )
                 return {
                     "id": keyword_type.id,
                     "name": keyword_type.name,
@@ -584,9 +662,12 @@ class InteractiveContentService:
             raise ServiceException(
                 status_code=500,
                 detail="Failed to create keyword type",
-                additional_info={"error": str(e), "data": keyword_type_data.model_dump()},
+                additional_info={
+                    "error": str(e),
+                    "data": keyword_type_data.model_dump(),
+                },
             )
-    
+
     async def get_all_keyword_types(self) -> list[dict]:
         """Get all available keyword types."""
         try:
@@ -595,7 +676,7 @@ class InteractiveContentService:
                 {
                     "id": ktype.id,
                     "name": ktype.name,
-                    "description": getattr(ktype, 'description', None),
+                    "description": getattr(ktype, "description", None),
                 }
                 for ktype in keyword_types
             ]
@@ -606,9 +687,11 @@ class InteractiveContentService:
                 status_code=500,
                 detail="Failed to get keyword types",
                 additional_info={"error": str(e)},
-            )    
+            )
 
-    async def update_keyword_type(self, keyword_type_id: uuid.UUID, keyword_type_update: KeyWordTypeUpdateSchema) -> dict:
+    async def update_keyword_type(
+        self, keyword_type_id: uuid.UUID, keyword_type_update: KeyWordTypeUpdateSchema
+    ) -> dict:
         """Update a keyword type."""
         try:
             async with self.db.begin():
@@ -617,26 +700,28 @@ class InteractiveContentService:
                     update_data["name"] = keyword_type_update.name
                 if keyword_type_update.description is not None:
                     update_data["description"] = keyword_type_update.description
-                
+
                 if not update_data:
                     raise ServiceException(
                         status_code=400,
                         detail="No fields to update",
                         additional_info={"keyword_type_id": str(keyword_type_id)},
                     )
-                
-                keyword_type = await self.keyword_type_repo.update(keyword_type_id, update_data)
+
+                keyword_type = await self.keyword_type_repo.update(
+                    keyword_type_id, update_data
+                )
                 if not keyword_type:
                     raise ServiceException(
                         status_code=404,
                         detail="Keyword type not found",
                         additional_info={"keyword_type_id": str(keyword_type_id)},
                     )
-                
+
                 return {
                     "id": keyword_type.id,
                     "name": keyword_type.name,
-                    "description": getattr(keyword_type, 'description', None),
+                    "description": getattr(keyword_type, "description", None),
                 }
         except CustomException as e:
             raise e
@@ -644,9 +729,12 @@ class InteractiveContentService:
             raise ServiceException(
                 status_code=500,
                 detail="Failed to update keyword type",
-                additional_info={"error": str(e), "keyword_type_id": str(keyword_type_id)},
+                additional_info={
+                    "error": str(e),
+                    "keyword_type_id": str(keyword_type_id),
+                },
             )
-    
+
     async def delete_keyword_type(self, keyword_type_id: uuid.UUID) -> bool:
         """Delete a keyword type."""
         try:
@@ -665,15 +753,20 @@ class InteractiveContentService:
             raise ServiceException(
                 status_code=500,
                 detail="Failed to delete keyword type",
-                additional_info={"error": str(e), "keyword_type_id": str(keyword_type_id)},
+                additional_info={
+                    "error": str(e),
+                    "keyword_type_id": str(keyword_type_id),
+                },
             )
-    
+
     # Word Type CRUD operations
     async def create_word_type(self, word_type_data: WordTypeCreateSchema) -> dict:
         """Create a new word type."""
         try:
             async with self.db.begin():
-                word_type = await self.word_type_repo.create(word_type_data.model_dump())
+                word_type = await self.word_type_repo.create(
+                    word_type_data.model_dump()
+                )
                 return {
                     "id": word_type.id,
                     "name": word_type.name,
@@ -687,7 +780,7 @@ class InteractiveContentService:
                 detail="Failed to create word type",
                 additional_info={"error": str(e), "data": word_type_data.model_dump()},
             )
-        
+
     async def get_all_word_types(self) -> list[dict]:
         """Get all available word types."""
         try:
@@ -696,7 +789,7 @@ class InteractiveContentService:
                 {
                     "id": wtype.id,
                     "name": wtype.name,
-                    "description": getattr(wtype, 'description', None),
+                    "description": getattr(wtype, "description", None),
                 }
                 for wtype in word_types
             ]
@@ -708,8 +801,10 @@ class InteractiveContentService:
                 detail="Failed to get word types",
                 additional_info={"error": str(e)},
             )
-        
-    async def update_word_type(self, word_type_id: uuid.UUID, word_type_update: WordTypeUpdateSchema) -> dict:
+
+    async def update_word_type(
+        self, word_type_id: uuid.UUID, word_type_update: WordTypeUpdateSchema
+    ) -> dict:
         """Update a word type."""
         try:
             async with self.db.begin():
@@ -718,14 +813,14 @@ class InteractiveContentService:
                     update_data["name"] = word_type_update.name
                 if word_type_update.description is not None:
                     update_data["description"] = word_type_update.description
-                
+
                 if not update_data:
                     raise ServiceException(
                         status_code=400,
                         detail="No fields to update",
                         additional_info={"word_type_id": str(word_type_id)},
                     )
-                
+
                 word_type = await self.word_type_repo.update(word_type_id, update_data)
                 if not word_type:
                     raise ServiceException(
@@ -733,11 +828,11 @@ class InteractiveContentService:
                         detail="Word type not found",
                         additional_info={"word_type_id": str(word_type_id)},
                     )
-                
+
                 return {
                     "id": word_type.id,
                     "name": word_type.name,
-                    "description": getattr(word_type, 'description', None),
+                    "description": getattr(word_type, "description", None),
                 }
         except CustomException as e:
             raise e
@@ -747,7 +842,7 @@ class InteractiveContentService:
                 detail="Failed to update word type",
                 additional_info={"error": str(e), "word_type_id": str(word_type_id)},
             )
-    
+
     async def delete_word_type(self, word_type_id: uuid.UUID) -> bool:
         """Delete a word type."""
         try:
@@ -768,13 +863,17 @@ class InteractiveContentService:
                 detail="Failed to delete word type",
                 additional_info={"error": str(e), "word_type_id": str(word_type_id)},
             )
-    
+
     # Visual Type CRUD operations
-    async def create_visual_type(self, visual_type_data: VisualTypeCreateSchema) -> dict:
+    async def create_visual_type(
+        self, visual_type_data: VisualTypeCreateSchema
+    ) -> dict:
         """Create a new visual type."""
         try:
             async with self.db.begin():
-                visual_type = await self.visual_type_repo.create(visual_type_data.model_dump())
+                visual_type = await self.visual_type_repo.create(
+                    visual_type_data.model_dump()
+                )
                 return {
                     "id": visual_type.id,
                     "name": visual_type.name,
@@ -786,9 +885,12 @@ class InteractiveContentService:
             raise ServiceException(
                 status_code=500,
                 detail="Failed to create visual type",
-                additional_info={"error": str(e), "data": visual_type_data.model_dump()},
+                additional_info={
+                    "error": str(e),
+                    "data": visual_type_data.model_dump(),
+                },
             )
-    
+
     async def get_all_visual_types(self) -> list[dict]:
         """Get all available visual types."""
         try:
@@ -797,7 +899,7 @@ class InteractiveContentService:
                 {
                     "id": vtype.id,
                     "name": vtype.name,
-                    "description": getattr(vtype, 'description', None),
+                    "description": getattr(vtype, "description", None),
                 }
                 for vtype in visual_types
             ]
@@ -809,8 +911,10 @@ class InteractiveContentService:
                 detail="Failed to get visual types",
                 additional_info={"error": str(e)},
             )
-        
-    async def update_visual_type(self, visual_type_id: uuid.UUID, visual_type_update: VisualTypeUpdateSchema) -> dict:
+
+    async def update_visual_type(
+        self, visual_type_id: uuid.UUID, visual_type_update: VisualTypeUpdateSchema
+    ) -> dict:
         """Update a visual type."""
         try:
             async with self.db.begin():
@@ -819,26 +923,28 @@ class InteractiveContentService:
                     update_data["name"] = visual_type_update.name
                 if visual_type_update.description is not None:
                     update_data["description"] = visual_type_update.description
-                
+
                 if not update_data:
                     raise ServiceException(
                         status_code=400,
                         detail="No fields to update",
                         additional_info={"visual_type_id": str(visual_type_id)},
                     )
-                
-                visual_type = await self.visual_type_repo.update(visual_type_id, update_data)
+
+                visual_type = await self.visual_type_repo.update(
+                    visual_type_id, update_data
+                )
                 if not visual_type:
                     raise ServiceException(
                         status_code=404,
                         detail="Visual type not found",
                         additional_info={"visual_type_id": str(visual_type_id)},
                     )
-                
+
                 return {
                     "id": visual_type.id,
                     "name": visual_type.name,
-                    "description": getattr(visual_type, 'description', None),
+                    "description": getattr(visual_type, "description", None),
                 }
         except CustomException as e:
             raise e
@@ -846,9 +952,12 @@ class InteractiveContentService:
             raise ServiceException(
                 status_code=500,
                 detail="Failed to update visual type",
-                additional_info={"error": str(e), "visual_type_id": str(visual_type_id)},
+                additional_info={
+                    "error": str(e),
+                    "visual_type_id": str(visual_type_id),
+                },
             )
-    
+
     async def delete_visual_type(self, visual_type_id: uuid.UUID) -> bool:
         """Delete a visual type."""
         try:
@@ -867,15 +976,20 @@ class InteractiveContentService:
             raise ServiceException(
                 status_code=500,
                 detail="Failed to delete visual type",
-                additional_info={"error": str(e), "visual_type_id": str(visual_type_id)},
+                additional_info={
+                    "error": str(e),
+                    "visual_type_id": str(visual_type_id),
+                },
             )
-    
+
     # Chart Type CRUD operations
     async def create_chart_type(self, chart_type_data: ChartTypeCreateSchema) -> dict:
         """Create a new chart type."""
         try:
             async with self.db.begin():
-                chart_type = await self.chart_type_repo.create(chart_type_data.model_dump())
+                chart_type = await self.chart_type_repo.create(
+                    chart_type_data.model_dump()
+                )
                 return {
                     "id": chart_type.id,
                     "name": chart_type.name,
@@ -889,7 +1003,7 @@ class InteractiveContentService:
                 detail="Failed to create chart type",
                 additional_info={"error": str(e), "data": chart_type_data.model_dump()},
             )
-    
+
     async def get_all_chart_types(self) -> list[dict]:
         """Get all available chart types."""
         try:
@@ -898,7 +1012,7 @@ class InteractiveContentService:
                 {
                     "id": ctype.id,
                     "name": ctype.name,
-                    "description": getattr(ctype, 'description', None),
+                    "description": getattr(ctype, "description", None),
                 }
                 for ctype in chart_types
             ]
@@ -910,8 +1024,10 @@ class InteractiveContentService:
                 detail="Failed to get chart types",
                 additional_info={"error": str(e)},
             )
-        
-    async def update_chart_type(self, chart_type_id: uuid.UUID, chart_type_update: ChartTypeUpdateSchema) -> dict:
+
+    async def update_chart_type(
+        self, chart_type_id: uuid.UUID, chart_type_update: ChartTypeUpdateSchema
+    ) -> dict:
         """Update a chart type."""
         try:
             async with self.db.begin():
@@ -920,26 +1036,28 @@ class InteractiveContentService:
                     update_data["name"] = chart_type_update.name
                 if chart_type_update.description is not None:
                     update_data["description"] = chart_type_update.description
-                
+
                 if not update_data:
                     raise ServiceException(
                         status_code=400,
                         detail="No fields to update",
                         additional_info={"chart_type_id": str(chart_type_id)},
                     )
-                
-                chart_type = await self.chart_type_repo.update(chart_type_id, update_data)
+
+                chart_type = await self.chart_type_repo.update(
+                    chart_type_id, update_data
+                )
                 if not chart_type:
                     raise ServiceException(
                         status_code=404,
                         detail="Chart type not found",
                         additional_info={"chart_type_id": str(chart_type_id)},
                     )
-                
+
                 return {
                     "id": chart_type.id,
                     "name": chart_type.name,
-                    "description": getattr(chart_type, 'description', None),
+                    "description": getattr(chart_type, "description", None),
                 }
         except CustomException as e:
             raise e
@@ -949,7 +1067,7 @@ class InteractiveContentService:
                 detail="Failed to update chart type",
                 additional_info={"error": str(e), "chart_type_id": str(chart_type_id)},
             )
-    
+
     async def delete_chart_type(self, chart_type_id: uuid.UUID) -> bool:
         """Delete a chart type."""
         try:
@@ -970,7 +1088,7 @@ class InteractiveContentService:
                 detail="Failed to delete chart type",
                 additional_info={"error": str(e), "chart_type_id": str(chart_type_id)},
             )
-    
+
     # Visual Data Retrieval Methods
     async def get_visual_data_by_id(self, visual_id: uuid.UUID) -> dict:
         """Get visual data by visual_id with full content."""
@@ -982,7 +1100,7 @@ class InteractiveContentService:
                     detail="Visual item not found",
                     additional_info={"visual_id": str(visual_id)},
                 )
-            
+
             # Get visual type to determine what data to fetch
             visual_type = await self.visual_type_repo.get(visual_item.visual_type_id)
             if not visual_type:
@@ -991,7 +1109,7 @@ class InteractiveContentService:
                     detail="Visual type not found",
                     additional_info={"visual_type_id": str(visual_item.visual_type_id)},
                 )
-            
+
             # Fetch the specific data based on visual type
             specific_data = None
             if visual_type.name == "table" and visual_item.table_id:
@@ -999,7 +1117,9 @@ class InteractiveContentService:
             elif visual_type.name == "chart" and visual_item.chart_id:
                 chart_data = await self.chart_repo.get(visual_item.chart_id)
                 if chart_data:
-                    chart_type = await self.chart_type_repo.get(chart_data.chart_type_id)
+                    chart_type = await self.chart_type_repo.get(
+                        chart_data.chart_type_id
+                    )
                     specific_data = {
                         "id": chart_data.id,
                         "chart_type_id": chart_data.chart_type_id,
@@ -1010,7 +1130,7 @@ class InteractiveContentService:
                     }
             elif visual_type.name == "image" and visual_item.image_id:
                 specific_data = await self.image_repo.get(visual_item.image_id)
-            
+
             return {
                 "id": visual_item.id,
                 "visual_type_id": visual_item.visual_type_id,
@@ -1020,7 +1140,12 @@ class InteractiveContentService:
                 "table_id": visual_item.table_id,
                 "chart_id": visual_item.chart_id,
                 "image_id": visual_item.image_id,
-                "data": specific_data.__dict__ if hasattr(specific_data, '__dict__') and not isinstance(specific_data, dict) else specific_data
+                "data": (
+                    specific_data.__dict__
+                    if hasattr(specific_data, "__dict__")
+                    and not isinstance(specific_data, dict)
+                    else specific_data
+                ),
             }
         except CustomException as e:
             raise e
@@ -1030,7 +1155,7 @@ class InteractiveContentService:
                 detail="Failed to get visual data by id",
                 additional_info={"error": str(e), "visual_id": str(visual_id)},
             )
-    
+
     async def get_visual_data_by_type_id(self, visual_type_id: uuid.UUID) -> list[dict]:
         """Get all visual data items by visual_type_id."""
         try:
@@ -1042,10 +1167,10 @@ class InteractiveContentService:
                     detail="Visual type not found",
                     additional_info={"visual_type_id": str(visual_type_id)},
                 )
-            
+
             # Get all visual items for this type
             visual_items = await self.visual_repo.get_visuals_by_type(visual_type.name)
-            
+
             result = []
             for visual_item in visual_items:
                 # Fetch the specific data for each visual item
@@ -1055,7 +1180,9 @@ class InteractiveContentService:
                 elif visual_type.name == "chart" and visual_item.chart_id:
                     chart_data = await self.chart_repo.get(visual_item.chart_id)
                     if chart_data:
-                        chart_type = await self.chart_type_repo.get(chart_data.chart_type_id)
+                        chart_type = await self.chart_type_repo.get(
+                            chart_data.chart_type_id
+                        )
                         specific_data = {
                             "id": chart_data.id,
                             "chart_type_id": chart_data.chart_type_id,
@@ -1066,19 +1193,26 @@ class InteractiveContentService:
                         }
                 elif visual_type.name == "image" and visual_item.image_id:
                     specific_data = await self.image_repo.get(visual_item.image_id)
-                
-                result.append({
-                    "id": visual_item.id,
-                    "visual_type_id": visual_item.visual_type_id,
-                    "visual_type_name": visual_type.name,
-                    "paragraph_id": visual_item.paragraph_id,
-                    "start_time": visual_item.start_time,
-                    "table_id": visual_item.table_id,
-                    "chart_id": visual_item.chart_id,
-                    "image_id": visual_item.image_id,
-                    "data": specific_data.__dict__ if hasattr(specific_data, '__dict__') and not isinstance(specific_data, dict) else specific_data
-                })
-            
+
+                result.append(
+                    {
+                        "id": visual_item.id,
+                        "visual_type_id": visual_item.visual_type_id,
+                        "visual_type_name": visual_type.name,
+                        "paragraph_id": visual_item.paragraph_id,
+                        "start_time": visual_item.start_time,
+                        "table_id": visual_item.table_id,
+                        "chart_id": visual_item.chart_id,
+                        "image_id": visual_item.image_id,
+                        "data": (
+                            specific_data.__dict__
+                            if hasattr(specific_data, "__dict__")
+                            and not isinstance(specific_data, dict)
+                            else specific_data
+                        ),
+                    }
+                )
+
             return result
         except CustomException as e:
             raise e
@@ -1086,6 +1220,8 @@ class InteractiveContentService:
             raise ServiceException(
                 status_code=500,
                 detail="Failed to get visual data by type id",
-                additional_info={"error": str(e), "visual_type_id": str(visual_type_id)},
+                additional_info={
+                    "error": str(e),
+                    "visual_type_id": str(visual_type_id),
+                },
             )
-        

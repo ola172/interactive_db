@@ -6,12 +6,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.models.interactive_models.visual_models import (
-    VisualItemModel, 
-    VisualTypeModel, 
-    TableDataModel, 
-    ChartDataModel, 
-    ChartTypeModel, 
-    ImageModel
+    VisualItemModel,
+    VisualTypeModel,
+    TableDataModel,
+    ChartDataModel,
+    ChartTypeModel,
+    ImageModel,
 )
 from app.repositories.base_repo import BaseRepository
 from app.exceptions.repo_exception import RepoException
@@ -21,7 +21,9 @@ class VisualItemRepository(BaseRepository[VisualItemModel]):
     def __init__(self, db: AsyncSession):
         super().__init__(VisualItemModel, db)
 
-    async def get_visual_by_paragraph_id(self, paragraph_id: UUID) -> VisualItemModel | None:
+    async def get_visual_by_paragraph_id(
+        self, paragraph_id: UUID
+    ) -> VisualItemModel | None:
         try:
             stmt = (
                 select(VisualItemModel)
@@ -42,7 +44,9 @@ class VisualItemRepository(BaseRepository[VisualItemModel]):
                 additional_info={"error": str(e), "paragraph_id": str(paragraph_id)},
             )
 
-    async def get_visuals_by_type(self, visual_type_name: str) -> Sequence[VisualItemModel]:
+    async def get_visuals_by_type(
+        self, visual_type_name: str
+    ) -> Sequence[VisualItemModel]:
         try:
             stmt = (
                 select(VisualItemModel)
@@ -107,14 +111,16 @@ class ChartDataRepository(BaseRepository[ChartDataModel]):
     def __init__(self, db: AsyncSession):
         super().__init__(ChartDataModel, db)
 
-    async def get_chart_with_type_and_visual(self, chart_id: UUID) -> ChartDataModel | None:
+    async def get_chart_with_type_and_visual(
+        self, chart_id: UUID
+    ) -> ChartDataModel | None:
         try:
             stmt = (
                 select(ChartDataModel)
                 .where(ChartDataModel.id == chart_id)
                 .options(
                     selectinload(ChartDataModel.chart_type),
-                    selectinload(ChartDataModel.visual_item)
+                    selectinload(ChartDataModel.visual_item),
                 )
             )
             result = await self.db.execute(stmt)
@@ -126,7 +132,9 @@ class ChartDataRepository(BaseRepository[ChartDataModel]):
                 additional_info={"error": str(e), "chart_id": str(chart_id)},
             )
 
-    async def get_charts_by_type(self, chart_type_name: str) -> Sequence[ChartDataModel]:
+    async def get_charts_by_type(
+        self, chart_type_name: str
+    ) -> Sequence[ChartDataModel]:
         try:
             stmt = (
                 select(ChartDataModel)
@@ -160,51 +168,67 @@ class ChartTypeRepository(BaseRepository[ChartTypeModel]):
                 additional_info={"error": str(e), "name": name},
             )
 
-    def validate_chart_data(self, chart_type_name: str, labels: list, data: list) -> dict:
+    def validate_chart_data(
+        self, chart_type_name: str, labels: list, data: list
+    ) -> dict:
         """
         Validate chart data based on chart type requirements.
         Returns validation result with error details if any.
         """
         validation_result = {"valid": True, "errors": []}
-        
+
         if chart_type_name == "pie":
             # Pie charts require equal number of labels and data points
             if len(labels) != len(data):
                 validation_result["valid"] = False
-                validation_result["errors"].append("Pie charts require equal number of labels and data points")
-            
+                validation_result["errors"].append(
+                    "Pie charts require equal number of labels and data points"
+                )
+
             # Pie chart data should be positive numbers
             if not all(isinstance(d, (int, float)) and d >= 0 for d in data):
                 validation_result["valid"] = False
-                validation_result["errors"].append("Pie chart data must be positive numbers")
-        
+                validation_result["errors"].append(
+                    "Pie chart data must be positive numbers"
+                )
+
         elif chart_type_name in ["bar", "line"]:
             # Bar and line charts require equal number of labels and data points
             if len(labels) != len(data):
                 validation_result["valid"] = False
-                validation_result["errors"].append(f"{chart_type_name.title()} charts require equal number of labels and data points")
-            
+                validation_result["errors"].append(
+                    f"{chart_type_name.title()} charts require equal number of labels and data points"
+                )
+
             # Data should be numeric
             if not all(isinstance(d, (int, float)) for d in data):
                 validation_result["valid"] = False
-                validation_result["errors"].append(f"{chart_type_name.title()} chart data must be numeric")
-        
+                validation_result["errors"].append(
+                    f"{chart_type_name.title()} chart data must be numeric"
+                )
+
         elif chart_type_name == "radar":
             # Radar charts require at least 3 data points
             if len(labels) < 3 or len(data) < 3:
                 validation_result["valid"] = False
-                validation_result["errors"].append("Radar charts require at least 3 data points")
-            
+                validation_result["errors"].append(
+                    "Radar charts require at least 3 data points"
+                )
+
             # Radar charts require equal number of labels and data points
             if len(labels) != len(data):
                 validation_result["valid"] = False
-                validation_result["errors"].append("Radar charts require equal number of labels and data points")
-            
+                validation_result["errors"].append(
+                    "Radar charts require equal number of labels and data points"
+                )
+
             # Data should be numeric and positive
             if not all(isinstance(d, (int, float)) and d >= 0 for d in data):
                 validation_result["valid"] = False
-                validation_result["errors"].append("Radar chart data must be positive numbers")
-        
+                validation_result["errors"].append(
+                    "Radar chart data must be positive numbers"
+                )
+
         return validation_result
 
 

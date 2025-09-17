@@ -13,6 +13,7 @@ class KeyWordTypeResponse(BaseModel):
     class Config:
         from_attributes = True
 
+
 class VideoKeywordTypeStyleResponse(BaseModel):
     id: uuid.UUID
     video_id: uuid.UUID
@@ -25,6 +26,7 @@ class VideoKeywordTypeStyleResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
 
 class InteractiveWordResponse(BaseModel):
     id: uuid.UUID
@@ -49,6 +51,7 @@ class InteractiveKeywordResponse(BaseModel):
 
 
 # Visual Data Response Schemas
+
 
 class VisualTypeResponse(BaseModel):
     id: uuid.UUID

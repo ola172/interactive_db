@@ -1,5 +1,3 @@
-
-
 import uuid
 from sqlalchemy import UUID, Column, ForeignKey
 from sqlalchemy.orm import relationship
@@ -29,7 +27,8 @@ class InteractiveCourseDetailsModel(Base):
         "InteractiveChapterModel",
         back_populates="course",
         order_by="InteractiveChapterModel.view_index",
-        cascade="all, delete-orphan"
+        cascade="all, delete-orphan",
     )
-    product = relationship("Product", back_populates="interactive_course_detail", uselist=False)
-
+    product = relationship(
+        "Product", back_populates="interactive_course_detail", uselist=False
+    )
