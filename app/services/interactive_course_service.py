@@ -1,6 +1,5 @@
 import uuid
 from typing import Optional, Any
-from datetime import timedelta
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -401,9 +400,7 @@ class InteractiveCourseService:
                     "quiz_id": video_data.quiz_id,
                     "title": video_data.title,
                     "url": video_data.url,
-                    "video_duration": timedelta(
-                        seconds=video_data.video_duration
-                    ),  # Convert float to timedelta
+                    "video_duration": video_data.video_duration,
                     "view_index": video_data.view_index,
                 }
                 video = await self.video_repo.create(video_dict)
@@ -552,9 +549,7 @@ class InteractiveCourseService:
                 if video_data.url is not None:
                     update_data["url"] = video_data.url
                 if video_data.video_duration is not None:
-                    update_data["video_duration"] = timedelta(
-                        seconds=video_data.video_duration
-                    )  # Convert float to timedelta
+                    update_data["video_duration"] = video_data.video_duration
                 if video_data.view_index is not None:
                     update_data["view_index"] = video_data.view_index
                 if video_data.quiz_id is not None:

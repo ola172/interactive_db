@@ -130,7 +130,7 @@ class InteractiveVideoResponse(BaseModel):
     quiz_id: Optional[uuid.UUID] = Field(default=None)
     title: str
     url: str
-    video_duration: float  # Duration in seconds as float
+    video_duration: str
     view_index: int
     paragraphs: List[InteractiveParagraphResponse] = Field(default=[])
 
@@ -141,7 +141,7 @@ class InteractiveVideoResponse(BaseModel):
 class InteractiveVideoDetails(BaseModel):
     title: str
     url: str
-    video_duration: float  # Duration in seconds as float
+    video_duration: str
     view_index: Optional[int] = Field(default=None)
     quiz_id: Optional[uuid.UUID] = Field(default=None)
 

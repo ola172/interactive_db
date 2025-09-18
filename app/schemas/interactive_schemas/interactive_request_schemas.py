@@ -138,7 +138,7 @@ class InteractiveVideoCreateSchema(BaseModel):
     quiz_id: Optional[uuid.UUID] = Field(default=None)
     title: str
     url: str
-    video_duration: float
+    video_duration: str
     view_index: int
     paragraphs: List[InteractiveParagraphCreateSchema] = Field(
         description="All paragraphs data is required"
@@ -149,7 +149,7 @@ class InteractiveVideoUpdateSchema(BaseModel):
     quiz_id: Optional[uuid.UUID] = Field(default=None)
     title: Optional[str] = Field(default=None)
     url: Optional[str] = Field(default=None)
-    video_duration: Optional[float] = Field(default=None)  # Changed to float from str
+    video_duration: Optional[str] = Field(default=None)
     view_index: Optional[int] = Field(default=None)
 
 

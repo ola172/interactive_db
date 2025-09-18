@@ -1,5 +1,5 @@
 import uuid
-from sqlalchemy import UUID, Column, ForeignKey, Integer, Interval, Text
+from sqlalchemy import UUID, Column, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import relationship
 
 from app.core.database import Base
@@ -20,7 +20,7 @@ class InteractiveVideoModel(Base):
     quiz_id = Column(UUID(as_uuid=True), ForeignKey("quizzes.id"))
     title = Column(Text, nullable=False)
     url = Column(Text, nullable=False)
-    video_duration = Column(Interval, nullable=False)
+    video_duration = Column(String, nullable=False)
     view_index = Column(Integer, nullable=False)
 
     # Relationships
