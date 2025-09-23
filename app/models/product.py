@@ -2,7 +2,7 @@
 import uuid
 from datetime import datetime
 
-from sqlalchemy import Column, String, Text, DateTime, ForeignKey
+from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey
 from sqlalchemy import func, select
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.ext.hybrid import hybrid_property
@@ -19,9 +19,9 @@ class ProductType(Base):
     __tablename__ = "product_types"
 
     id = Column(
-        UUID(as_uuid=True),
+        Integer,
         primary_key=True,
-        default=uuid.uuid4,
+        autoincrement=True,
         nullable=False,
 
     )
@@ -59,7 +59,7 @@ class Product(Base):
     )
 
     # Foreign keys
-    type_id = Column(UUID(as_uuid=True), ForeignKey("product_types.id"), nullable=False, index=True)
+    type_id = Column(Integer, ForeignKey("product_types.id"), nullable=False, index=True)
     category_id = Column(UUID(as_uuid=True), ForeignKey("product_categories.id"), nullable=True, index=True)
     created_by = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True, index=True)
     updated_by = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True, index=True)
