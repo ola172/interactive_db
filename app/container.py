@@ -32,6 +32,8 @@ from app.repositories.interactive_repositories import (
     ImageRepository,
     WordTypeRepository,
 )
+from app.repositories.interactive_repositories.file_repository import FileRepository, FileTypeRepository
+from app.repositories.interactive_repositories.image_repository import ImageRepository as FileImageRepository
 from app.repositories.instructor import InstructorRateRepository
 from app.repositories.interactive_repositories.interactive_visual_repository import ChartTypeRepository
 from app.repositories.user import UserRepository, UserProductRepository, UserWaitingListRepository
@@ -44,6 +46,10 @@ from app.services.pathway_service import PathwayService
 from app.services.user_service import UserService
 from app.services.interactive_course_service import InteractiveCourseService
 from app.services.interactive_content_service import InteractiveContentService
+from app.services.interactive_file_service import InteractiveFileService
+from app.services.interactive_image_service import InteractiveImageService
+from app.services.interactive_file_storage_service import InteractiveFileStorageService
+from app.core.storage import StorageClient
 
 db = Database()
 
@@ -228,6 +234,24 @@ async def get_interactive_keyword_repository(
         session: AsyncSession = Depends(get_db_session),
 ) -> AsyncGenerator[InteractiveKeyWordRepository, Any]:
     yield InteractiveKeyWordRepository(session)
+
+
+async def get_file_repository(
+        session: AsyncSession = Depends(get_db_session),
+) -> AsyncGenerator[FileRepository, Any]:
+    yield FileRepository(session)
+
+
+async def get_file_type_repository(
+        session: AsyncSession = Depends(get_db_session),
+) -> AsyncGenerator[FileTypeRepository, Any]:
+    yield FileTypeRepository(session)
+
+
+async def get_file_image_repository(
+        session: AsyncSession = Depends(get_db_session),
+) -> AsyncGenerator[FileImageRepository, Any]:
+    yield FileImageRepository(session)
 
 
 async def get_keyword_type_repository(
@@ -467,3 +491,39 @@ async def get_interactive_content_service(
         chart_type_repo=chart_type_repo,
         image_repo=image_repo,
     )
+
+
+async def get_interactive_file_service(
+        file_repo: FileRepository = Depends(get_file_repository),
+        file_type_repo: FileTypeRepository = Depends(get_file_type_repository),
+        image_repo: FileImageRepository = Depends(get_file_image_repository),
+        storage_service: InteractiveFileStorageService = Depends(get_file_storage_service),
+) -> AsyncGenerator["InteractiveFileService", Any]:
+    yield InteractiveFileService(
+        db=file_repo.db,
+        file_repo=file_repo,
+        file_type_repo=file_type_repo,
+        image_repo=image_repo,
+        storage_service=storage_service,
+    )
+
+
+async def get_interactive_image_service(
+        image_repo: FileImageRepository = Depends(get_file_image_repository),
+        storage_service: InteractiveFileStorageService = Depends(get_file_storage_service),
+) -> AsyncGenerator["InteractiveImageService", Any]:
+    yield InteractiveImageService(
+        db=image_repo.db,
+        image_repo=image_repo,
+        storage_service=storage_service,
+    )
+
+
+async def get_storage_client() -> AsyncGenerator[StorageClient, Any]:
+    yield StorageClient()
+
+
+async def get_file_storage_service(
+        storage_client: StorageClient = Depends(get_storage_client),
+) -> AsyncGenerator[InteractiveFileStorageService, Any]:
+    yield InteractiveFileStorageService(storage_client=storage_client)

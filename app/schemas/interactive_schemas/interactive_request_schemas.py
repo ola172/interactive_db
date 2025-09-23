@@ -220,3 +220,60 @@ class InteractiveCourseUpdateSchema(BaseModel):
     # Related data
     skills: Optional[List[uuid.UUID]] = Field(default=None)
     objectives: Optional[List[uuid.UUID]] = Field(default=None)
+
+
+# File and Image Request Schemas
+class FileImageTypeEnum(str, Enum):
+    TWO_D_IMAGE = "2d_image"
+    THREE_D_IMAGE = "3d_image"
+    CHART = "chart"
+    TABLE = "table"
+
+
+class FileCreateSchema(BaseModel):
+    video_id: Optional[uuid.UUID] = Field(default=None)
+    file_type_id: uuid.UUID
+    bucket_name: str = Field(default="interactive-files")  # Default bucket name
+
+
+class FileUpdateSchema(BaseModel):
+    file_name: Optional[str] = Field(default=None)
+    video_id: Optional[uuid.UUID] = Field(default=None)
+    file_type_id: Optional[uuid.UUID] = Field(default=None)
+    bucket_name: Optional[str] = Field(default=None)
+    storage_path: Optional[str] = Field(default=None)
+    file_url: Optional[str] = Field(default=None)
+
+
+class ImageCreateSchema(BaseModel):
+    file_id: uuid.UUID
+    image_title: str
+    proposed_image_type: FileImageTypeEnum
+    is_protected: bool = False
+    searched_image_url: Optional[str] = Field(default=None)
+    description: Optional[str] = Field(default=None)
+
+
+class ImageUpdateSchema(BaseModel):
+    image_title: Optional[str] = Field(default=None)
+    proposed_image_type: Optional[FileImageTypeEnum] = Field(default=None)
+    is_protected: Optional[bool] = Field(default=None)
+    original_image_url: Optional[str] = Field(default=None)
+    searched_image_url: Optional[str] = Field(default=None)
+    description: Optional[str] = Field(default=None)
+
+
+class FileTypeCreateSchema(BaseModel):
+    name: str
+    description: Optional[str] = Field(default=None)
+
+
+# Video Upload Schema
+class InteractiveVideoUploadSchema(BaseModel):
+    chapter_id: uuid.UUID = Field(..., description="Chapter ID this video belongs to")
+    quiz_id: Optional[uuid.UUID] = Field(default=None, description="Optional quiz ID")
+    title: str = Field(..., min_length=1, max_length=255, description="Video title")
+    video_duration: str = Field(..., description="Video duration (e.g., '10:30')")
+    view_index: int = Field(..., ge=0, description="Display order index")
+    asset_file_id: uuid.UUID = Field(..., description="Asset file ID to update with video reference")
+    video_style: Optional[str] = Field(default=None, max_length=100, description="Video style information")
