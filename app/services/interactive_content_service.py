@@ -1,12 +1,11 @@
 import uuid
-from typing import Optional, Any, Dict, Type
-from abc import ABC, abstractmethod
+from typing import Optional, Any
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.exceptions.custom_exception import CustomException
 from app.exceptions.service_exception import ServiceException
-from app.helper import VisualDataHandler, ImageDataHandler, ChartDataHandler, TableDataHandler
+from app.helper import VisualDataRegistry
 from app.repositories.interactive_repositories import (
     InteractiveParagraphRepository,
     WordTypeRepository,
@@ -34,32 +33,6 @@ from app.schemas.interactive_schemas import (
     VisualDataCreateSchema,
     VisualDataUpdateSchema,
 )
-
-class VisualDataRegistry:
-    """Registry for visual data handlers using the registry pattern"""
-
-    def __init__(self):
-        self._handlers: Dict[str, VisualDataHandler] = {
-            "table": TableDataHandler(),
-            "chart": ChartDataHandler(),
-            "image": ImageDataHandler(),
-        }
-
-    def get_handler(self, visual_type: str) -> VisualDataHandler:
-        """Get the appropriate handler for a visual type"""
-        handler = self._handlers.get(visual_type.lower())
-        if not handler:
-            raise ServiceException(
-                status_code=400,
-                detail=f"Unsupported visual type: {visual_type}",
-                additional_info={"supported_types": list(self._handlers.keys())},
-            )
-        return handler
-
-    def register_handler(self, visual_type: str, handler: VisualDataHandler):
-        """Register a new visual data handler"""
-        self._handlers[visual_type.lower()] = handler
-
 
 class InteractiveContentService:
     def __init__(

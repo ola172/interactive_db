@@ -1,6 +1,8 @@
 import uuid
-from typing import Optional, Any
+from typing import Optional, Any, List
+from uuid import UUID
 
+from fastapi import UploadFile
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.exceptions.custom_exception import CustomException
@@ -21,6 +23,8 @@ from app.repositories.interactive_repositories import (
     ChartTypeRepository,
     ImageRepository,
 )
+from app.repositories.interactive_repositories.file_repository import FileRepository
+from app.services.interactive_file_storage_service import InteractiveFileStorageService
 from app.repositories.product import ProductRepository
 from app.repositories.skill import ProductSkillRepository
 from app.repositories import ProductObjectiveRepository
@@ -28,16 +32,19 @@ from app.schemas.interactive_schemas import (
     InteractiveCourseCreateSchema,
     InteractiveCourseUpdateSchema,
 )
-from app.constant_manager import ProductType
+from app.constant_manager import ProductType, StorageBucket
 from app.schemas.interactive_schemas import (
     InteractiveChapterCreateSchema,
     InteractiveChapterUpdateSchema,
     InteractiveVideoCreateSchema,
     InteractiveVideoUpdateSchema,
+    InteractiveVideoUploadSchema,
+    VideoKeywordStyleUpdateSchema,
     VideoKeywordTypeStyleUpdateSchema,
     VisualDataCreateSchema,
     VisualDataUpdateSchema,
 )
+from app.helper import VisualDataRegistry
 
 
 class InteractiveCourseService:
@@ -61,6 +68,8 @@ class InteractiveCourseService:
         chart_repo: ChartDataRepository,
         chart_type_repo: ChartTypeRepository,
         image_repo: ImageRepository,
+        file_repo: FileRepository,
+        storage_service: InteractiveFileStorageService,
     ):
         self.db = db
         self.course_detail_repo = course_detail_repo
@@ -80,6 +89,73 @@ class InteractiveCourseService:
         self.chart_repo = chart_repo
         self.chart_type_repo = chart_type_repo
         self.image_repo = image_repo
+        self.file_repo = file_repo
+        self.storage_service = storage_service
+
+        # Initialize visual data registry
+        self.visual_registry = VisualDataRegistry()
+
+    async def _create_visual_data_with_registry(
+        self, paragraph_id: uuid.UUID, visual_data: VisualDataCreateSchema
+    ) -> dict:
+        """Create visual data using registry pattern to determine handler based on visual_type_id."""
+        # Get visual type by ID
+        visual_type = await self.visual_type_repo.get(visual_data.visual_type_id)
+        if not visual_type:
+            raise ServiceException(
+                status_code=400,
+                detail="Visual type not found",
+                additional_info={"visual_type_id": str(visual_data.visual_type_id)},
+            )
+
+        # Get the appropriate handler for this visual type
+        handler = self.visual_registry.get_handler(visual_type.name)
+
+        # Prepare repositories for handler
+        repos = {
+            "table_repo": self.table_repo,
+            "chart_repo": self.chart_repo,
+            "image_repo": self.image_repo,
+        }
+
+        # Determine which data to use based on visual type
+        data_to_use = {}
+        if visual_type.name == "table" and visual_data.table_data:
+            data_to_use = visual_data.table_data.model_dump()
+        elif visual_type.name == "chart" and visual_data.chart_data:
+            data_to_use = visual_data.chart_data.model_dump()
+        elif visual_type.name == "image" and visual_data.image_data:
+            data_to_use = visual_data.image_data.model_dump()
+        else:
+            raise ServiceException(
+                status_code=400,
+                detail=f"No {visual_type.name} data provided for {visual_type.name} visual type",
+                additional_info={"visual_type": visual_type.name},
+            )
+
+        # Create the specific data using the handler
+        specific_data_id = await handler.create(data_to_use, repos)
+
+        # Create visual item linking to the specific data
+        visual_dict = {
+            "visual_type_id": visual_data.visual_type_id,
+            "paragraph_id": paragraph_id,
+            "start_time": visual_data.start_time,
+            "table_id": (specific_data_id if visual_type.name == "table" else None),
+            "chart_id": (specific_data_id if visual_type.name == "chart" else None),
+            "image_id": (specific_data_id if visual_type.name == "image" else None),
+        }
+        visual_item = await self.visual_repo.create(visual_dict)
+
+        return {
+            "id": visual_item.id,
+            "visual_type_id": visual_item.visual_type_id,
+            "paragraph_id": visual_item.paragraph_id,
+            "start_time": visual_item.start_time,
+            "table_id": visual_item.table_id,
+            "chart_id": visual_item.chart_id,
+            "image_id": visual_item.image_id,
+        }
 
     async def create_interactive_course_product(
         self, course_data: InteractiveCourseCreateSchema
@@ -801,100 +877,11 @@ class InteractiveCourseService:
         self, paragraph_id: uuid.UUID, visual_data: VisualDataCreateSchema
     ) -> dict:
         """
-        Create visual data and decide insertion location based on type.
-        Unified endpoint for creating table, chart, or image data.
+        Create visual data using registry pattern to determine handler based on visual_type_id.
         """
         try:
             async with self.db.begin():
-                # Get visual type by ID
-                visual_type = await self.visual_type_repo.get(
-                    visual_data.visual_type_id
-                )
-                if not visual_type:
-                    raise ServiceException(
-                        status_code=400,
-                        detail=f"Visual type with ID {visual_data.visual_type_id} not found",
-                        additional_info={
-                            "visual_type_id": str(visual_data.visual_type_id)
-                        },
-                    )
-
-                # Create specific data type based on type
-                table_id = None
-                chart_id = None
-                image_id = None
-
-                if visual_data.table_data and visual_data.visual_type.value == "table":
-                    table_dict = {
-                        "headers": visual_data.table_data.headers,
-                        "rows": visual_data.table_data.rows,
-                        "title": "",  # Default empty title since schema doesn't provide it
-                        "caption": "",  # Default empty caption since schema doesn't provide it
-                    }
-                    table = await self.table_repo.create(table_dict)
-                    await self.db.flush()
-                    table_id = table.id
-
-                elif (
-                    visual_data.chart_data and visual_data.visual_type.value == "chart"
-                ):
-                    chart_dict = {
-                        "chart_type_id": visual_data.chart_data.chart_type_id,
-                        "labels": visual_data.chart_data.labels,
-                        "data": visual_data.chart_data.data,
-                        "title": visual_data.chart_data.title,
-                    }
-                    chart = await self.chart_repo.create(chart_dict)
-                    await self.db.flush()
-                    chart_id = chart.id
-
-                elif (
-                    visual_data.image_data and visual_data.visual_type.value == "image"
-                ):
-                    image_dict = {
-                        "url": visual_data.image_data.url,
-                        "alt_text": visual_data.image_data.alt_text,
-                        "title": visual_data.image_data.caption
-                        or "",  # Map caption to title field
-                    }
-                    image = await self.image_repo.create(image_dict)
-                    await self.db.flush()
-                    image_id = image.id
-
-                else:
-                    raise ServiceException(
-                        status_code=400,
-                        detail="Invalid visual data configuration",
-                        additional_info={
-                            "visual_type": visual_data.visual_type.value,
-                            "has_table_data": visual_data.table_data is not None,
-                            "has_chart_data": visual_data.chart_data is not None,
-                            "has_image_data": visual_data.image_data is not None,
-                        },
-                    )
-
-                # Create visual item linking to the specific data
-                visual_dict = {
-                    "visual_type_id": visual_data.visual_type_id,
-                    "paragraph_id": paragraph_id,
-                    "start_time": visual_data.start_time,
-                    "table_id": table_id,
-                    "chart_id": chart_id,
-                    "image_id": image_id,
-                }
-                visual_item = await self.visual_repo.create(visual_dict)
-
-                await self.db.flush()
-                visual_response = {
-                    "id": visual_item.id,
-                    "visual_type_id": visual_item.visual_type_id,
-                    "paragraph_id": visual_item.paragraph_id,
-                    "start_time": visual_item.start_time,
-                    "table_id": visual_item.table_id,
-                    "chart_id": visual_item.chart_id,
-                    "image_id": visual_item.image_id,
-                }
-            return visual_response
+                return await self._create_visual_data_with_registry(paragraph_id, visual_data)
         except CustomException as e:
             raise e
         except Exception as e:
@@ -908,7 +895,7 @@ class InteractiveCourseService:
         self, visual_id: uuid.UUID, visual_data: VisualDataUpdateSchema
     ) -> dict:
         """
-        Update visual data by visual item ID.
+        Update visual data using registry pattern.
         """
         try:
             async with self.db.begin():
@@ -921,66 +908,67 @@ class InteractiveCourseService:
                         additional_info={"visual_id": str(visual_id)},
                     )
 
-                # Update visual item fields if provided
+                # Update visual item basic fields
                 visual_update_data = {}
+                if visual_data.visual_type_id is not None:
+                    visual_update_data["visual_type_id"] = visual_data.visual_type_id
                 if visual_data.start_time is not None:
                     visual_update_data["start_time"] = visual_data.start_time
 
-                if visual_data.visual_type_id is not None:
-                    visual_type = await self.visual_type_repo.get(
-                        visual_data.visual_type_id
-                    )
-                    if not visual_type:
-                        raise ServiceException(
-                            status_code=400,
-                            detail=f"Visual type with ID {visual_data.visual_type_id} not found",
-                            additional_info={
-                                "visual_type_id": str(visual_data.visual_type_id)
-                            },
-                        )
-                    visual_update_data["visual_type_id"] = visual_data.visual_type_id
-
-                # Update specific data based on which type is provided
-                if visual_data.table_data and visual_item.table_id:
-                    table_update_data = {
-                        "headers": visual_data.table_data.headers,
-                        "rows": visual_data.table_data.rows,
-                        # Note: title and caption are preserved from existing data
-                    }
-                    await self.table_repo.update(
-                        visual_item.table_id, table_update_data
-                    )
-
-                elif visual_data.chart_data and visual_item.chart_id:
-                    chart_update_data = {
-                        "chart_type_id": visual_data.chart_data.chart_type_id,
-                        "labels": visual_data.chart_data.labels,
-                        "data": visual_data.chart_data.data,
-                        "title": visual_data.chart_data.title,
-                    }
-                    await self.chart_repo.update(
-                        visual_item.chart_id, chart_update_data
-                    )
-
-                elif visual_data.image_data and visual_item.image_id:
-                    image_update_data = {
-                        "url": visual_data.image_data.url,
-                        "alt_text": visual_data.image_data.alt_text,
-                        "title": visual_data.image_data.caption
-                        or "",  # Map caption to title field
-                    }
-                    await self.image_repo.update(
-                        visual_item.image_id, image_update_data
-                    )
-
-                # Update visual item if there are changes
                 if visual_update_data:
-                    visual_item = await self.visual_repo.update(
-                        visual_id, visual_update_data
+                    visual_item = await self.visual_repo.update(visual_id, visual_update_data)
+
+                # Get visual type to determine handler
+                visual_type = await self.visual_type_repo.get(visual_item.visual_type_id)
+                if not visual_type:
+                    raise ServiceException(
+                        status_code=400,
+                        detail="Visual type not found",
+                        additional_info={"visual_type_id": str(visual_item.visual_type_id)},
+                    )
+
+                # Update specific data if provided
+                handler = self.visual_registry.get_handler(visual_type.name)
+                repos = {
+                    "table_repo": self.table_repo,
+                    "chart_repo": self.chart_repo,
+                    "image_repo": self.image_repo,
+                }
+
+                # Update the specific data based on type
+                if (
+                    visual_type.name == "table"
+                    and visual_data.table_data
+                    and visual_item.table_id
+                ):
+                    await handler.update(
+                        visual_item.table_id,
+                        visual_data.table_data.model_dump(),
+                        repos,
+                    )
+                elif (
+                    visual_type.name == "chart"
+                    and visual_data.chart_data
+                    and visual_item.chart_id
+                ):
+                    await handler.update(
+                        visual_item.chart_id,
+                        visual_data.chart_data.model_dump(),
+                        repos,
+                    )
+                elif (
+                    visual_type.name == "image"
+                    and visual_data.image_data
+                    and visual_item.image_id
+                ):
+                    await handler.update(
+                        visual_item.image_id,
+                        visual_data.image_data.model_dump(),
+                        repos,
                     )
 
                 await self.db.flush()
-                visual_response = {
+                return {
                     "id": visual_item.id,
                     "visual_type_id": visual_item.visual_type_id,
                     "paragraph_id": visual_item.paragraph_id,
@@ -989,7 +977,6 @@ class InteractiveCourseService:
                     "chart_id": visual_item.chart_id,
                     "image_id": visual_item.image_id,
                 }
-            return visual_response
         except CustomException as e:
             raise e
         except Exception as e:
@@ -1001,8 +988,7 @@ class InteractiveCourseService:
 
     async def delete_visual_data(self, visual_id: uuid.UUID) -> bool:
         """
-        Delete visual data by visual item ID.
-        This will cascade delete the associated table, chart, or image data.
+        Delete visual data using registry pattern.
         """
         try:
             async with self.db.begin():
@@ -1015,13 +1001,23 @@ class InteractiveCourseService:
                         additional_info={"visual_id": str(visual_id)},
                     )
 
-                # Delete the specific data type first
-                if visual_item.table_id:
-                    await self.table_repo.delete(visual_item.table_id)
-                elif visual_item.chart_id:
-                    await self.chart_repo.delete(visual_item.chart_id)
-                elif visual_item.image_id:
-                    await self.image_repo.delete(visual_item.image_id)
+                # Get visual type to determine handler
+                visual_type = await self.visual_type_repo.get(visual_item.visual_type_id)
+                if visual_type:
+                    handler = self.visual_registry.get_handler(visual_type.name)
+                    repos = {
+                        "table_repo": self.table_repo,
+                        "chart_repo": self.chart_repo,
+                        "image_repo": self.image_repo,
+                    }
+
+                    # Delete the specific data first
+                    if visual_item.table_id:
+                        await handler.delete(visual_item.table_id, repos)
+                    elif visual_item.chart_id:
+                        await handler.delete(visual_item.chart_id, repos)
+                    elif visual_item.image_id:
+                        await handler.delete(visual_item.image_id, repos)
 
                 # Then delete the visual item
                 success = await self.visual_repo.delete(visual_id)
@@ -1031,7 +1027,7 @@ class InteractiveCourseService:
                         detail="Visual item not found",
                         additional_info={"visual_id": str(visual_id)},
                     )
-            return success
+                return success
         except CustomException as e:
             raise e
         except Exception as e:
@@ -1081,4 +1077,223 @@ class InteractiveCourseService:
                 status_code=500,
                 detail="Failed to get visual data",
                 additional_info={"error": str(e), "visual_id": str(visual_id)},
+            )
+
+    async def create_video_with_upload(
+        self, video_data: InteractiveVideoUploadSchema, video_file: UploadFile
+    ) -> dict:
+        """
+        Create a new video with file upload, store video file, and update asset file reference.
+        """
+        try:
+            async with self.db.begin():
+                # 1. Upload video file to storage
+                storage_path, video_url, _ = await self.storage_service.upload_file(
+                    file=video_file,
+                    bucket_name=StorageBucket.INTERACTIVE_BUCKET,
+                    folder_prefix=StorageBucket.VIDEO_FOLDER
+                )
+
+                # 2. Create video with uploaded URL
+                video_dict = {
+                    "chapter_id": video_data.chapter_id,
+                    "quiz_id": video_data.quiz_id,
+                    "title": video_data.title,
+                    "url": video_url,  # Use uploaded video URL
+                    "video_duration": video_data.video_duration,
+                    "view_index": video_data.view_index,
+                }
+                video = await self.video_repo.create(video_dict)
+                await self.db.flush()
+
+                # 3. Update asset file with video_id
+                if video_data.asset_file_id:
+                    asset_file = await self.file_repo.get(video_data.asset_file_id)
+                    if not asset_file:
+                        raise ServiceException(
+                            status_code=404,
+                            detail="Asset file not found",
+                            additional_info={"asset_file_id": str(video_data.asset_file_id)},
+                        )
+
+                    await self.file_repo.update(video_data.asset_file_id, {"video_id": video.id})
+
+                # 4. Create keyword type styles for this video
+                if video_data.keyword_styles:
+                    # Create provided keyword styles
+                    for style_data in video_data.keyword_styles:
+                        style_dict = {
+                            "video_id": video.id,
+                            "keyword_type_id": style_data.keyword_type_id,
+                            "color_light": style_data.color_light,
+                            "color_dark": style_data.color_dark,
+                            "shadow_light": style_data.shadow_light,
+                            "shadow_dark": style_data.shadow_dark,
+                            "size": style_data.size,
+                        }
+                        await self.keyword_style_repo.create(style_dict)
+                else:
+                    # Create default keyword type styles for all available keyword types
+                    all_keyword_types = await self.keyword_type_repo.get_all(page=1, limit=100)
+                    for keyword_type in all_keyword_types:
+                        style_dict = {
+                            "video_id": video.id,
+                            "keyword_type_id": keyword_type.id,
+                            "color_light": "#000000",
+                            "color_dark": "#FFFFFF", 
+                            "shadow_light": None,
+                            "shadow_dark": None,
+                            "size": 14,
+                        }
+                        await self.keyword_style_repo.create(style_dict)
+
+                # 5. Create paragraphs data (same as regular create_video)
+                for paragraph_data in video_data.paragraphs:
+                    paragraph_dict = {
+                        "video_id": video.id,
+                        "paragraph_text": paragraph_data.paragraph_text,
+                        "start_time": paragraph_data.start_time,
+                        "end_time": paragraph_data.end_time,
+                        "view_index": paragraph_data.view_index,
+                    }
+                    paragraph = await self.paragraph_repo.create(paragraph_dict)
+                    await self.db.flush()
+
+                    # Create words for this paragraph
+                    for word_data in paragraph_data.words:
+                        word_dict = {
+                            "paragraph_id": paragraph.id,
+                            "type_id": word_data.word_type_id,
+                            "word": word_data.word,
+                            "start_time": word_data.start_time,
+                            "end_time": word_data.end_time,
+                        }
+                        await self.word_repo.create(word_dict)
+
+                    # Create keywords for this paragraph
+                    for keyword_data in paragraph_data.keywords:
+                        keyword_dict = {
+                            "paragraph_id": paragraph.id,
+                            "type_id": keyword_data.keyword_type_id,
+                            "word": keyword_data.word,
+                        }
+                        await self.keyword_repo.create(keyword_dict)
+
+                    # Create visual data if provided
+                    if paragraph_data.visual_data:
+                        await self._create_visual_data_with_registry(
+                            paragraph.id, paragraph_data.visual_data
+                        )
+
+                await self.db.flush()
+
+                return await self.video_repo.get_video_with_paragraphs(
+                    video_id=video.id
+                    )
+
+        except CustomException as e:
+            raise e
+        except Exception as e:
+            raise ServiceException(
+                status_code=500,
+                detail="Failed to create video with upload",
+                additional_info={
+                    "error": str(e),
+                    "video_data": str(video_data),
+                    "filename": video_file.filename,
+                },
+            )
+
+    async def update_video_keyword_styles(
+        self, video_id: UUID, keyword_styles: List[VideoKeywordStyleUpdateSchema]
+    ) -> dict:
+        """
+        Update keyword styles for a specific video.
+        """
+        try:
+            async with self.db.begin():
+                # 1. Verify video exists
+                video = await self.video_repo.get(video_id)
+                if not video:
+                    raise ServiceException(
+                        status_code=404,
+                        detail="Video not found",
+                        additional_info={"video_id": str(video_id)},
+                    )
+
+                updated_styles = []
+
+                # 2. Update each keyword style
+                for style_update in keyword_styles:
+                    # Find existing style for this video and keyword type
+                    existing_styles = await self.keyword_style_repo.get_all(page=1, limit=1000)
+                    existing_style = None
+
+                    for style in existing_styles:
+                        if (style.video_id == video_id and 
+                            style.keyword_type_id == style_update.keyword_type_id):
+                            existing_style = style
+                            break
+
+                    if existing_style:
+                        # Update existing style
+                        update_data = {}
+                        if style_update.color_light is not None:
+                            update_data["color_light"] = style_update.color_light
+                        if style_update.color_dark is not None:
+                            update_data["color_dark"] = style_update.color_dark
+                        if style_update.shadow_light is not None:
+                            update_data["shadow_light"] = style_update.shadow_light
+                        if style_update.shadow_dark is not None:
+                            update_data["shadow_dark"] = style_update.shadow_dark
+                        if style_update.size is not None:
+                            update_data["size"] = style_update.size
+
+                        if update_data:
+                            updated_style = await self.keyword_style_repo.update(
+                                existing_style.id, update_data
+                            )
+                            updated_styles.append(updated_style)
+                    else:
+                        # Create new style if it doesn't exist
+                        create_data = {
+                            "video_id": video_id,
+                            "keyword_type_id": style_update.keyword_type_id,
+                            "color_light": style_update.color_light or "#000000",
+                            "color_dark": style_update.color_dark or "#FFFFFF",
+                            "shadow_light": style_update.shadow_light,
+                            "shadow_dark": style_update.shadow_dark,
+                            "size": style_update.size or 14,
+                        }
+                        new_style = await self.keyword_style_repo.create(create_data)
+                        updated_styles.append(new_style)
+
+                await self.db.flush()
+                return {
+                    "video_id": video_id,
+                    "updated_styles_count": len(updated_styles),
+                    "updated_styles": [
+                        {
+                            "keyword_type_id": str(style.keyword_type_id),
+                            "color_light": style.color_light,
+                            "color_dark": style.color_dark,
+                            "shadow_light": style.shadow_light,
+                            "shadow_dark": style.shadow_dark,
+                            "size": style.size,
+                        }
+                        for style in updated_styles
+                    ],
+                }
+
+        except CustomException as e:
+            raise e
+        except Exception as e:
+            raise ServiceException(
+                status_code=500,
+                detail="Failed to update video keyword styles",
+                additional_info={
+                    "error": str(e),
+                    "video_id": str(video_id),
+                    "keyword_styles_count": len(keyword_styles),
+                },
             )
