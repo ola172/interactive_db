@@ -30,7 +30,6 @@ class StorageClient:
             bucket = self.get_bucket(bucket_name)
             return bucket.upload(file_name, content)
         except Exception as e:
-            print(e)
             raise CustomException(
                 status_code=500,
                 detail="Failed to upload file to storage",

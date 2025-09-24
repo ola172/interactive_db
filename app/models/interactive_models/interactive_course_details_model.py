@@ -21,7 +21,6 @@ class InteractiveCourseDetailsModel(Base):
     final_exam_id = Column(UUID(as_uuid=True), ForeignKey("quizzes.id"))
 
     # Relationships
-    product = relationship("Product", back_populates="course_detail", uselist=False)
     # instructors = relationship("CourseInstructor", back_populates="course")
     chapters = relationship(
         "InteractiveChapterModel",
