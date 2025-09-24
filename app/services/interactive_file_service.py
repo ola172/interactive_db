@@ -4,11 +4,12 @@ from uuid import UUID
 from fastapi import UploadFile
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.constant_manager import StorageBucket
 from app.repositories.interactive_repositories.file_repository import FileRepository, FileTypeRepository
 from app.repositories.interactive_repositories.image_repository import ImageRepository
 from app.models.interactive_models.files_model import FileModel
 from app.models.interactive_models.file_type_model import FileTypeModel
-from app.models.interactive_models.image_model import ImageModel
+from app.models.interactive_models.image_model import AssistImageModel
 from app.schemas.interactive_schemas.interactive_request_schemas import (
     FileCreateSchema,
     FileUpdateSchema,
@@ -40,8 +41,8 @@ class InteractiveFileService:
             # Upload file to storage
             storage_path, file_url, original_filename = await self.storage_service.upload_file(
                 file=uploaded_file,
-                bucket_name=file_data.bucket_name,
-                folder_prefix="files"
+                bucket_name=StorageBucket.INTERACTIVE_BUCKET,
+                folder_prefix=StorageBucket.ASSIST_FILES_FOLDER
             )
             
             # Create file record in database
@@ -49,7 +50,7 @@ class InteractiveFileService:
                 "file_name": original_filename,
                 "video_id": file_data.video_id,
                 "file_type_id": file_data.file_type_id,
-                "bucket_name": file_data.bucket_name,
+                "bucket_name": StorageBucket.INTERACTIVE_BUCKET,
                 "storage_path": storage_path,
                 "file_url": file_url
             }
@@ -157,4 +158,14 @@ class InteractiveFileService:
                 status_code=500,
                 detail="Error retrieving file type by name",
                 additional_info={"error": str(e), "name": name},
+            )
+
+    async def get_all_file_types(self) -> List[FileTypeModel]:
+        try:
+            return await self.file_type_repo.get_all()
+        except Exception as e:
+            raise ServiceException(
+                status_code=500,
+                detail="Error retrieving all file types",
+                additional_info={"error": str(e)},
             )

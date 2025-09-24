@@ -5,21 +5,21 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from app.models.interactive_models.image_model import ImageModel, ImageTypeEnum
+from app.models.interactive_models.image_model import AssistImageModel, AssistImageTypeEnum
 from app.repositories.base_repo import BaseRepository
 from app.exceptions.repo_exception import RepoException
 
 
-class ImageRepository(BaseRepository[ImageModel]):
+class ImageRepository(BaseRepository[AssistImageModel]):
     def __init__(self, db: AsyncSession):
-        super().__init__(ImageModel, db)
+        super().__init__(AssistImageModel, db)
 
-    async def get_images_by_file_id(self, file_id: UUID) -> List[ImageModel]:
+    async def get_images_by_file_id(self, file_id: UUID) -> List[AssistImageModel]:
         try:
             stmt = (
-                select(ImageModel)
-                .where(ImageModel.file_id == file_id)
-                .options(selectinload(ImageModel.file))
+                select(AssistImageModel)
+                .where(AssistImageModel.file_id == file_id)
+                .options(selectinload(AssistImageModel.file))
             )
             result = await self.db.execute(stmt)
             return result.scalars().all()
@@ -31,17 +31,17 @@ class ImageRepository(BaseRepository[ImageModel]):
             )
 
     async def get_images_by_type(
-        self, image_type: ImageTypeEnum, file_id: Optional[UUID] = None
-    ) -> List[ImageModel]:
+        self, image_type: AssistImageTypeEnum, file_id: Optional[UUID] = None
+    ) -> List[AssistImageModel]:
         try:
-            stmt = select(ImageModel).where(
-                ImageModel.proposed_image_type == image_type
+            stmt = select(AssistImageModel).where(
+                AssistImageModel.proposed_image_type == image_type
             )
             
             if file_id:
-                stmt = stmt.where(ImageModel.file_id == file_id)
+                stmt = stmt.where(AssistImageModel.file_id == file_id)
                 
-            stmt = stmt.options(selectinload(ImageModel.file))
+            stmt = stmt.options(selectinload(AssistImageModel.file))
             result = await self.db.execute(stmt)
             return result.scalars().all()
         except Exception as e:
@@ -71,14 +71,14 @@ class ImageRepository(BaseRepository[ImageModel]):
                 additional_info={"error": str(e), "image_id": str(image_id)},
             )
 
-    async def get_protected_images(self, file_id: Optional[UUID] = None) -> List[ImageModel]:
+    async def get_protected_images(self, file_id: Optional[UUID] = None) -> List[AssistImageModel]:
         try:
-            stmt = select(ImageModel).where(ImageModel.is_protected == True)
+            stmt = select(AssistImageModel).where(AssistImageModel.is_protected == True)
             
             if file_id:
-                stmt = stmt.where(ImageModel.file_id == file_id)
+                stmt = stmt.where(AssistImageModel.file_id == file_id)
                 
-            stmt = stmt.options(selectinload(ImageModel.file))
+            stmt = stmt.options(selectinload(AssistImageModel.file))
             result = await self.db.execute(stmt)
             return result.scalars().all()
         except Exception as e:

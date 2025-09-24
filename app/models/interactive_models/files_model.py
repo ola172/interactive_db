@@ -12,7 +12,7 @@ class FileModel(Base):
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
     file_name = Column(String(255), nullable=False)
-    video_id = Column(UUID(as_uuid=True), nullable=True)
+    video_id = Column(UUID(as_uuid=True), ForeignKey("interactive_video.id"), nullable=True)
     
     # File type relationship
     file_type_id = Column(UUID(as_uuid=True), ForeignKey("file_types.id"), nullable=False)
@@ -24,7 +24,7 @@ class FileModel(Base):
 
     # Relationships
     file_type = relationship("FileTypeModel", back_populates="files")
-    images = relationship("ImageModel", back_populates="file", cascade="all, delete-orphan")
+    images = relationship("AssistImageModel", back_populates="file", cascade="all, delete-orphan")
     video = relationship("InteractiveVideoModel", back_populates="files")
 
     # metadata

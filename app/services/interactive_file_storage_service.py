@@ -15,8 +15,8 @@ class InteractiveFileStorageService:
         file_extension = os.path.splitext(original_filename)[1]
         unique_id = str(uuid.uuid4())
         if prefix:
-            return f"{prefix}/{unique_id}_{original_filename}"
-        return f"{unique_id}_{original_filename}"
+            return f"{prefix}/{unique_id}_{original_filename}.{file_extension}"
+        return f"{unique_id}_{original_filename}.{file_extension}"
 
     async def upload_file(
         self, 
@@ -30,20 +30,16 @@ class InteractiveFileStorageService:
         try:
             # Generate unique filename
             unique_filename = self._generate_unique_filename(file.filename, folder_prefix)
-            
             # Read file content
             content = await file.read()
-            
             # Upload to storage
             upload_result = self.storage_client.upload_file(
                 bucket_name=bucket_name,
                 file_name=unique_filename,
                 content=content
             )
-            
             # Get public URL
             file_url = self.storage_client.get_file_url(bucket_name, unique_filename)
-            
             return unique_filename, file_url, file.filename
             
         except Exception as e:

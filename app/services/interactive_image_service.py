@@ -4,8 +4,9 @@ from uuid import UUID
 from fastapi import UploadFile
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.constant_manager import StorageBucket
 from app.repositories.interactive_repositories.image_repository import ImageRepository
-from app.models.interactive_models.image_model import ImageModel, ImageTypeEnum
+from app.models.interactive_models.image_model import AssistImageModel, AssistImageTypeEnum
 from app.schemas.interactive_schemas.interactive_request_schemas import (
     ImageCreateSchema,
     ImageUpdateSchema,
@@ -25,12 +26,12 @@ class InteractiveImageService:
         self.image_repo = image_repo
         self.storage_service = storage_service
 
-    async def create_image(self, image_data: ImageCreateSchema, uploaded_image: UploadFile) -> ImageModel:
+    async def create_image(self, image_data: ImageCreateSchema, uploaded_image: UploadFile) -> AssistImageModel:
         try:
             # Upload image to storage (uses default bucket "interactive-files")
             storage_path, image_url, original_filename = await self.storage_service.upload_image(
                 image=uploaded_image,
-                bucket_name="interactive-files",
+                bucket_name=StorageBucket.INTERACTIVE_BUCKET,
                 folder_prefix="images"
             )
             
@@ -43,7 +44,7 @@ class InteractiveImageService:
                 "original_image_url": image_url,
                 "searched_image_url": image_data.searched_image_url,
                 "description": image_data.description,
-                "bucket_name": "interactive-files",
+                "bucket_name": StorageBucket.INTERACTIVE_BUCKET,
                 "storage_path": storage_path
             }
             
@@ -62,7 +63,7 @@ class InteractiveImageService:
                 },
             )
 
-    async def get_image(self, image_id: UUID) -> Optional[ImageModel]:
+    async def get_image(self, image_id: UUID) -> Optional[AssistImageModel]:
         try:
             return await self.image_repo.get(image_id)
         except Exception as e:
@@ -72,7 +73,7 @@ class InteractiveImageService:
                 additional_info={"error": str(e), "image_id": str(image_id)},
             )
 
-    async def get_images_by_file(self, file_id: UUID) -> List[ImageModel]:
+    async def get_images_by_file(self, file_id: UUID) -> List[AssistImageModel]:
         try:
             return await self.image_repo.get_images_by_file_id(file_id)
         except Exception as e:
@@ -83,8 +84,8 @@ class InteractiveImageService:
             )
 
     async def get_images_by_type(
-        self, image_type: ImageTypeEnum, file_id: Optional[UUID] = None
-    ) -> List[ImageModel]:
+        self, image_type: AssistImageTypeEnum, file_id: Optional[UUID] = None
+    ) -> List[AssistImageModel]:
         try:
             return await self.image_repo.get_images_by_type(image_type, file_id)
         except Exception as e:
@@ -98,7 +99,7 @@ class InteractiveImageService:
                 },
             )
 
-    async def get_protected_images(self, file_id: Optional[UUID] = None) -> List[ImageModel]:
+    async def get_protected_images(self, file_id: Optional[UUID] = None) -> List[AssistImageModel]:
         try:
             return await self.image_repo.get_protected_images(file_id)
         except Exception as e:
@@ -111,7 +112,7 @@ class InteractiveImageService:
                 },
             )
 
-    async def update_image(self, image_id: UUID, image_data: ImageUpdateSchema) -> Optional[ImageModel]:
+    async def update_image(self, image_id: UUID, image_data: ImageUpdateSchema) -> Optional[AssistImageModel]:
         try:
             image_dict = image_data.model_dump(exclude_unset=True)
             if not image_dict:

@@ -8,22 +8,23 @@ from sqlalchemy.orm import relationship
 from app.core.database import Base
         
 
-class ImageTypeEnum(str, enum.Enum):
+class AssistImageTypeEnum(str, enum.Enum):
     TWO_D_IMAGE = "2d_image"
     THREE_D_IMAGE = "3d_image"
     CHART = "chart"
     TABLE = "table"
 
 
-class ImageModel(Base):
-    __tablename__ = "images"
+class AssistImageModel(Base):
+    __tablename__ = "assist_images"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
     file_id = Column(UUID(as_uuid=True), ForeignKey("files.id", ondelete="CASCADE"), nullable=False)
 
     # Image information
     image_title = Column(String(255), nullable=False)
-    proposed_image_type = Column(Enum(ImageTypeEnum), nullable=False)
+    description = Column(Text, nullable=False)
+    proposed_image_type = Column(Enum(AssistImageTypeEnum), nullable=False)
     is_protected = Column(Boolean, nullable=False, default=False)
     
     # Storage information
