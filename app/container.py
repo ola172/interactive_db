@@ -58,6 +58,10 @@ async def get_db_session() -> AsyncGenerator[AsyncSession, Any]:
         yield session
 
 
+async def get_storage_client() -> AsyncGenerator[StorageClient, Any]:
+    yield StorageClient()
+
+
 async def get_user_repository(
         session: AsyncSession = Depends(get_db_session),
 ) -> AsyncGenerator[UserRepository, Any]:
@@ -423,6 +427,13 @@ async def get_book_video_service(
     )
 
 
+async def get_file_storage_service(
+        storage_client: StorageClient = Depends(get_storage_client),
+) -> AsyncGenerator[InteractiveFileStorageService, Any]:
+    yield InteractiveFileStorageService(storage_client=storage_client)
+
+
+
 async def get_interactive_course_service(
         course_detail_repo: InteractiveCourseDetailsRepository = Depends(get_interactive_course_details_repository),
         chapter_repo: InteractiveChapterRepository = Depends(get_interactive_chapter_repository),
@@ -440,7 +451,9 @@ async def get_interactive_course_service(
         table_repo: TableDataRepository = Depends(get_table_data_repository),
         chart_repo: ChartDataRepository = Depends(get_chart_data_repository),
         image_repo: ImageRepository = Depends(get_image_repository),
-        chart_type_repo: ChartTypeRepository = Depends(get_chart_type_repo)
+        chart_type_repo: ChartTypeRepository = Depends(get_chart_type_repo),
+        file_repo: FileRepository = Depends(get_file_repository),
+        storage_service: InteractiveFileStorageService = Depends(get_file_storage_service),
 ) -> AsyncGenerator["InteractiveCourseService", Any]:
     yield InteractiveCourseService(
         db=course_detail_repo.db,
@@ -460,7 +473,9 @@ async def get_interactive_course_service(
         table_repo=table_repo,
         chart_repo=chart_repo,
         image_repo=image_repo,
-        chart_type_repo=chart_type_repo
+        chart_type_repo=chart_type_repo,
+        file_repo=file_repo,
+        storage_service=storage_service,
     )
 
 
@@ -517,13 +532,3 @@ async def get_interactive_image_service(
         image_repo=image_repo,
         storage_service=storage_service,
     )
-
-
-async def get_storage_client() -> AsyncGenerator[StorageClient, Any]:
-    yield StorageClient()
-
-
-async def get_file_storage_service(
-        storage_client: StorageClient = Depends(get_storage_client),
-) -> AsyncGenerator[InteractiveFileStorageService, Any]:
-    yield InteractiveFileStorageService(storage_client=storage_client)

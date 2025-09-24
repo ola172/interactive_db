@@ -6,7 +6,8 @@ class Settings(BaseSettings):
     # Database URL with type validation
     DATABASE_URL: PostgresDsn = Field(
         default="postgresql+psycopg2://postgres:postgres@localhost:5432/zedny_product",)
-
+    STORAGE_URL: str
+    STORAGE_KEY: str
     # Debug mode
     DEBUG: bool = Field(default=False)
 

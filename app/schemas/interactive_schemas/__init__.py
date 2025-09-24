@@ -16,6 +16,7 @@ from .interactive_request_schemas import (
     # Video request schemas
     InteractiveVideoCreateSchema,
     InteractiveVideoUpdateSchema,
+    InteractiveVideoUploadSchema,
     
     # Paragraph request schemas
     InteractiveParagraphCreateSchema,
@@ -33,6 +34,7 @@ from .interactive_request_schemas import (
     VisualTypeUpdateSchema,
     ChartTypeCreateSchema,
     ChartTypeUpdateSchema,
+    VideoKeywordStyleUpdateSchema,
     
     # Visual data request schemas
     TableDataCreateSchema,
@@ -88,6 +90,7 @@ __all__ = [
     "InteractiveVideoUpdateSchema",
     "InteractiveVideoResponse",
     "InteractiveVideoDetails",
+    "InteractiveVideoUploadSchema"
     
     # Paragraph schemas
     "InteractiveParagraphCreateSchema",
@@ -102,6 +105,7 @@ __all__ = [
     "VideoKeywordTypeStyleUpdateSchema",
     "KeyWordTypeCreateSchema",
     "WordTypeCreateSchema",
+    "VideoKeywordStyleUpdateSchema",
     
     # Visual data schemas
     "TableDataCreateSchema",

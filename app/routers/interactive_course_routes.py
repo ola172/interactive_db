@@ -1,5 +1,7 @@
+from typing import Optional
 import uuid
-from fastapi import APIRouter, Depends, Query, HTTPException
+from fastapi import APIRouter, Depends, Query, HTTPException, UploadFile, File, Form
+import json
 
 from app.container import get_interactive_course_service
 from app.exceptions.custom_exception import CustomHTTPException, CustomException
@@ -10,6 +12,8 @@ from app.schemas.interactive_schemas import (
     InteractiveChapterUpdateSchema,
     InteractiveVideoCreateSchema,
     InteractiveVideoUpdateSchema,
+    InteractiveVideoUploadSchema,
+    VideoKeywordStyleUpdateSchema,
 )
 from app.services.interactive_course_service import InteractiveCourseService
 
@@ -39,7 +43,7 @@ async def create_interactive_course(
     except CustomException as e:
         raise CustomHTTPException(
             status_code=e.status_code,
-            detail=e.detail,
+            detail=str(e.detail),
             exception_type=e.exception_type,
             additional_info=e.additional_info,
         )
@@ -73,7 +77,7 @@ async def get_all_interactive_courses(
     except CustomException as e:
         raise CustomHTTPException(
             status_code=e.status_code,
-            detail=e.detail,
+            detail=str(e.detail),
             exception_type=e.exception_type,
             additional_info=e.additional_info,
         )
@@ -106,7 +110,7 @@ async def get_interactive_course_by_id(
     except CustomException as e:
         raise CustomHTTPException(
             status_code=e.status_code,
-            detail=e.detail,
+            detail=str(e.detail),
             exception_type=e.exception_type,
             additional_info=e.additional_info,
         )
@@ -141,7 +145,7 @@ async def update_interactive_course(
     except CustomException as e:
         raise CustomHTTPException(
             status_code=e.status_code,
-            detail=e.detail,
+            detail=str(e.detail),
             exception_type=e.exception_type,
             additional_info=e.additional_info,
         )
@@ -175,7 +179,7 @@ async def delete_interactive_course(
     except CustomException as e:
         raise CustomHTTPException(
             status_code=e.status_code,
-            detail=e.detail,
+            detail=str(e.detail),
             exception_type=e.exception_type,
             additional_info=e.additional_info,
         )
@@ -211,7 +215,7 @@ async def get_chapters_by_course(
     except CustomException as e:
         raise CustomHTTPException(
             status_code=e.status_code,
-            detail=e.detail,
+            detail=str(e.detail),
             exception_type=e.exception_type,
             additional_info=e.additional_info,
         )
@@ -240,7 +244,7 @@ async def create_chapter(
     except CustomException as e:
         raise CustomHTTPException(
             status_code=e.status_code,
-            detail=e.detail,
+            detail=str(e.detail),
             exception_type=e.exception_type,
             additional_info=e.additional_info,
         )
@@ -272,7 +276,7 @@ async def update_chapter(
     except CustomException as e:
         raise CustomHTTPException(
             status_code=e.status_code,
-            detail=e.detail,
+            detail=str(e.detail),
             exception_type=e.exception_type,
             additional_info=e.additional_info,
         )
@@ -304,7 +308,7 @@ async def delete_chapter(
     except CustomException as e:
         raise CustomHTTPException(
             status_code=e.status_code,
-            detail=e.detail,
+            detail=str(e.detail),
             exception_type=e.exception_type,
             additional_info=e.additional_info,
         )
@@ -335,7 +339,7 @@ async def get_videos_by_chapter(
     except CustomException as e:
         raise CustomHTTPException(
             status_code=e.status_code,
-            detail=e.detail,
+            detail=str(e.detail),
             exception_type=e.exception_type,
             additional_info=e.additional_info,
         )
@@ -367,7 +371,89 @@ async def create_video(
     except CustomException as e:
         raise CustomHTTPException(
             status_code=e.status_code,
-            detail=e.detail,
+            detail=str(e.detail),
+            exception_type=e.exception_type,
+            additional_info=e.additional_info,
+        )
+    except Exception as e:
+        raise CustomHTTPException(
+            status_code=500,
+            detail="Internal server error",
+            exception_type="InternalServerError",
+            additional_info={"error": str(e)},
+        )
+
+
+@interactive_course_router.post("/videos/upload")
+async def create_video_with_upload(
+    video_file: UploadFile = File(..., description="Video file to upload"),
+    chapter_id: uuid.UUID = Form(..., description="Chapter ID this video belongs to"),
+    quiz_id: Optional[str] = Form(None, description="Optional quiz ID"),
+    title: str = Form(..., description="Video title"),
+    video_duration: str = Form(..., description="Video duration (e.g., '10:30')"),
+    view_index: int = Form(..., description="Display order index"),
+    asset_file_id: Optional[str] = Form(None, description="Asset file ID to update with video reference"),
+    keyword_styles: str = Form("[]", description="JSON string of keyword styles data"),
+    paragraphs: str = Form(..., description="JSON string of paragraphs data"),
+    interactive_course_service: InteractiveCourseService = Depends(get_interactive_course_service),
+):
+    """
+    Create a new video with file upload, store video file, and update asset file reference.
+    Includes all fields from regular video creation plus file upload and asset file update.
+    """
+    try:
+        if not asset_file_id or asset_file_id.strip() == '':
+            asset_file_id = None
+        if not quiz_id or quiz_id.strip() == '':
+            quiz_id = None
+        # Validate video file type
+        if not video_file.content_type or not video_file.content_type.startswith('video/'):
+            raise CustomHTTPException(
+                status_code=400,
+                detail="Invalid file type. Only video files are allowed.",
+                exception_type="ValidationError",
+                additional_info={"content_type": video_file.content_type},
+            )
+        
+        # Parse paragraphs JSON
+        try:
+            paragraphs_data = json.loads(paragraphs)
+        except json.JSONDecodeError as e:
+            raise CustomHTTPException(
+                status_code=400,
+                detail="Invalid paragraphs JSON format",
+                exception_type="ValidationError",
+                additional_info={"json_error": str(e)},
+            )
+        
+        # Parse keyword styles JSON
+        try:
+            keyword_styles_data = json.loads(keyword_styles)
+        except json.JSONDecodeError as e:
+            raise CustomHTTPException(
+                status_code=400,
+                detail="Invalid keyword styles JSON format",
+                exception_type="ValidationError",
+                additional_info={"json_error": str(e)},
+            )
+        # Create schema from form data
+        video_data = InteractiveVideoUploadSchema(
+            chapter_id=chapter_id,
+            quiz_id=quiz_id,
+            title=title,
+            video_duration=video_duration,
+            view_index=view_index,
+            asset_file_id=asset_file_id,
+            keyword_styles=keyword_styles_data,
+            paragraphs=paragraphs_data
+        )
+        
+        result = await interactive_course_service.create_video_with_upload(video_data, video_file)
+        return {"results": result}
+    except CustomException as e:
+        raise CustomHTTPException(
+            status_code=e.status_code,
+            detail=str(e.detail),
             exception_type=e.exception_type,
             additional_info=e.additional_info,
         )
@@ -397,7 +483,7 @@ async def update_video(
     except CustomException as e:
         raise CustomHTTPException(
             status_code=e.status_code,
-            detail=e.detail,
+            detail=str(e.detail),
             exception_type=e.exception_type,
             additional_info=e.additional_info,
         )
@@ -429,7 +515,7 @@ async def delete_video(
     except CustomException as e:
         raise CustomHTTPException(
             status_code=e.status_code,
-            detail=e.detail,
+            detail=str(e.detail),
             exception_type=e.exception_type,
             additional_info=e.additional_info,
         )
@@ -462,7 +548,73 @@ async def get_video_with_paragraphs(
     except CustomException as e:
         raise CustomHTTPException(
             status_code=e.status_code,
-            detail=e.detail,
+            detail=str(e.detail),
+            exception_type=e.exception_type,
+            additional_info=e.additional_info,
+        )
+    except Exception as e:
+        raise CustomHTTPException(
+            status_code=500,
+            detail="Internal server error",
+            exception_type="InternalServerError",
+            additional_info={"error": str(e)},
+        )
+
+
+@interactive_course_router.put("/videos/{video_id}/keyword-styles")
+async def update_video_keyword_styles(
+    video_id: uuid.UUID,
+    keyword_styles: str = Form(..., description="JSON string of keyword styles to update"),
+    interactive_course_service: InteractiveCourseService = Depends(get_interactive_course_service),
+):
+    """
+    Update keyword styles for a specific video.
+    Each keyword style contains the keyword type ID and style properties to update.
+    """
+    try:
+        # Parse keyword styles JSON
+        try:
+            keyword_styles_data = json.loads(keyword_styles)
+        except json.JSONDecodeError as e:
+            raise CustomHTTPException(
+                status_code=400,
+                detail="Invalid keyword styles JSON format",
+                exception_type="ValidationError",
+                additional_info={"json_error": str(e)},
+            )
+        
+        # Validate that we have at least one style to update
+        if not keyword_styles_data:
+            raise CustomHTTPException(
+                status_code=400,
+                detail="At least one keyword style must be provided",
+                exception_type="ValidationError",
+                additional_info={"keyword_styles_count": 0},
+            )
+        
+        # Create schema objects from JSON data
+        try:
+            styles_schemas = [
+                VideoKeywordStyleUpdateSchema(**style_data)
+                for style_data in keyword_styles_data
+            ]
+        except Exception as e:
+            raise CustomHTTPException(
+                status_code=400,
+                detail="Invalid keyword style data format",
+                exception_type="ValidationError",
+                additional_info={"validation_error": str(e)},
+            )
+        
+        result = await interactive_course_service.update_video_keyword_styles(
+            video_id, styles_schemas
+        )
+        return {"results": result}
+        
+    except CustomException as e:
+        raise CustomHTTPException(
+            status_code=e.status_code,
+            detail=str(e.detail),
             exception_type=e.exception_type,
             additional_info=e.additional_info,
         )
