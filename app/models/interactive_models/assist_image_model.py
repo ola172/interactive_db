@@ -9,8 +9,7 @@ from app.core.database import Base
         
 
 class AssistImageTypeEnum(str, enum.Enum):
-    TWO_D_IMAGE = "2d_image"
-    THREE_D_IMAGE = "3d_image"
+    IMAGE = "image"
     CHART = "chart"
     TABLE = "table"
 
