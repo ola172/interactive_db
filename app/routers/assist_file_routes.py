@@ -70,7 +70,7 @@ async def get_all_file_types(
         )
 
 
-@assist_file_router.get("/types/{name}")
+@assist_file_router.get("/types/{name}/")
 async def get_file_type_by_name(
     name: str,
     file_service: AssistFileService = Depends(get_assist_file_service),
@@ -142,7 +142,7 @@ async def create_file(
         )
 
 
-@assist_file_router.get("/{file_id}")
+@assist_file_router.get("/{file_id}/")
 async def get_file(
     file_id: uuid.UUID,
     file_service: AssistFileService = Depends(get_assist_file_service),
@@ -176,7 +176,7 @@ async def get_file(
         )
 
 
-@assist_file_router.get("/{video_id}")
+@assist_file_router.get("/{video_id}/")
 async def get_files_by_video(
     video_id: uuid.UUID,
     file_service: AssistFileService = Depends(get_assist_file_service),
@@ -203,7 +203,7 @@ async def get_files_by_video(
         )
 
 
-@assist_file_router.put("/{file_id}")
+@assist_file_router.put("/{file_id}/")
 async def update_file(
     file_id: uuid.UUID,
     file_request: FileUpdateSchema,
@@ -238,7 +238,7 @@ async def update_file(
         )
 
 
-@assist_file_router.delete("/{file_id}")
+@assist_file_router.delete("/{file_id}/")
 async def delete_file(
     file_id: uuid.UUID,
     file_service: AssistFileService = Depends(get_assist_file_service),

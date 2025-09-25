@@ -28,7 +28,7 @@ interactive_content_router = APIRouter(
 # Paragraph routes
 
 
-@interactive_content_router.get("/videos/{video_id}/paragraphs")
+@interactive_content_router.get("/videos/{video_id}/paragraphs/")
 async def get_paragraphs_by_video(
     video_id: uuid.UUID,
     interactive_content_service: InteractiveContentService = Depends(
@@ -60,7 +60,7 @@ async def get_paragraphs_by_video(
 # Keyword routes
 
 
-@interactive_content_router.post("/keyword_types")
+@interactive_content_router.post("/keyword_types/")
 async def create_keyword_type(
     keyword_type_data: KeyWordTypeCreateSchema,
     interactive_content_service: InteractiveContentService = Depends(
@@ -91,7 +91,7 @@ async def create_keyword_type(
         )
 
 
-@interactive_content_router.post("/paragraphs/{paragraph_id}/keywords")
+@interactive_content_router.post("/paragraphs/{paragraph_id}/keywords/")
 async def create_keyword(
     paragraph_id: uuid.UUID,
     keyword_data: InteractiveKeywordCreateSchema,
@@ -123,7 +123,7 @@ async def create_keyword(
         )
 
 
-@interactive_content_router.put("/keywords/{keyword_id}")
+@interactive_content_router.put("/keywords/{keyword_id}/")
 async def update_keyword(
     keyword_id: uuid.UUID,
     keyword_update: InteractiveKeywordUpdateSchema,
@@ -155,7 +155,7 @@ async def update_keyword(
         )
 
 
-@interactive_content_router.delete("/keywords/{keyword_id}")
+@interactive_content_router.delete("/keywords/{keyword_id}/")
 async def delete_keyword(
     keyword_id: uuid.UUID,
     interactive_content_service: InteractiveContentService = Depends(
@@ -187,7 +187,7 @@ async def delete_keyword(
 # Visual endpoints
 
 
-@interactive_content_router.post("/paragraphs/{paragraph_id}/visual")
+@interactive_content_router.post("/paragraphs/{paragraph_id}/visual/")
 async def create_visual_data(
     paragraph_id: uuid.UUID,
     visual_data: VisualDataCreateSchema,
@@ -219,7 +219,7 @@ async def create_visual_data(
         )
 
 
-@interactive_content_router.get("/visuals/{visual_id}")
+@interactive_content_router.get("/visuals/{visual_id}/")
 async def get_visual_data_by_id(
     visual_id: uuid.UUID,
     interactive_content_service: InteractiveContentService = Depends(
@@ -248,7 +248,7 @@ async def get_visual_data_by_id(
         )
 
 
-@interactive_content_router.put("/visuals/{visual_id}")
+@interactive_content_router.put("/visuals/{visual_id}/")
 async def update_visual_data(
     visual_id: uuid.UUID,
     visual_update: VisualDataUpdateSchema,
@@ -280,7 +280,7 @@ async def update_visual_data(
         )
 
 
-@interactive_content_router.delete("/visuals/{visual_id}")
+@interactive_content_router.delete("/visuals/{visual_id}/")
 async def delete_visual_data(
     visual_id: uuid.UUID,
     interactive_content_service: InteractiveContentService = Depends(
@@ -312,7 +312,7 @@ async def delete_visual_data(
 # Word endpoints
 
 
-@interactive_content_router.post("/word_types")
+@interactive_content_router.post("/word_types/")
 async def create_word_type(
     word_type_data: WordTypeCreateSchema,
     interactive_content_service: InteractiveContentService = Depends(
@@ -344,7 +344,7 @@ async def create_word_type(
 # Video keyword style endpoints
 
 
-@interactive_content_router.get("/videos/{video_id}/keyword-styles")
+@interactive_content_router.get("/videos/{video_id}/keyword-styles/")
 async def get_video_keyword_styles(
     video_id: uuid.UUID,
     interactive_content_service: InteractiveContentService = Depends(
@@ -376,7 +376,7 @@ async def get_video_keyword_styles(
 # Type endpoints
 
 
-@interactive_content_router.get("/keyword-types")
+@interactive_content_router.get("/keyword-types/")
 async def get_keyword_types(
     interactive_content_service: InteractiveContentService = Depends(
         get_interactive_content_service
@@ -404,7 +404,7 @@ async def get_keyword_types(
         )
 
 
-@interactive_content_router.get("/word-types")
+@interactive_content_router.get("/word-types/")
 async def get_word_types(
     interactive_content_service: InteractiveContentService = Depends(
         get_interactive_content_service
@@ -432,7 +432,7 @@ async def get_word_types(
         )
 
 
-@interactive_content_router.get("/visual-types")
+@interactive_content_router.get("/visual-types/")
 async def get_visual_types(
     interactive_content_service: InteractiveContentService = Depends(
         get_interactive_content_service
@@ -460,7 +460,7 @@ async def get_visual_types(
         )
 
 
-@interactive_content_router.get("/chart-types")
+@interactive_content_router.get("/chart-types/")
 async def get_chart_types(
     interactive_content_service: InteractiveContentService = Depends(
         get_interactive_content_service
@@ -491,7 +491,7 @@ async def get_chart_types(
 # Keyword Type CRUD endpoints
 
 
-@interactive_content_router.put("/keyword_types/{keyword_type_id}")
+@interactive_content_router.put("/keyword_types/{keyword_type_id}/")
 async def update_keyword_type(
     keyword_type_id: uuid.UUID,
     keyword_type_update: KeyWordTypeUpdateSchema,
@@ -523,7 +523,7 @@ async def update_keyword_type(
         )
 
 
-@interactive_content_router.delete("/keyword_types/{keyword_type_id}")
+@interactive_content_router.delete("/keyword_types/{keyword_type_id}/")
 async def delete_keyword_type(
     keyword_type_id: uuid.UUID,
     interactive_content_service: InteractiveContentService = Depends(
@@ -555,7 +555,7 @@ async def delete_keyword_type(
 # Word Type CRUD endpoints
 
 
-@interactive_content_router.put("/word_types/{word_type_id}")
+@interactive_content_router.put("/word_types/{word_type_id}/")
 async def update_word_type(
     word_type_id: uuid.UUID,
     word_type_update: WordTypeUpdateSchema,
@@ -587,7 +587,7 @@ async def update_word_type(
         )
 
 
-@interactive_content_router.delete("/word_types/{word_type_id}")
+@interactive_content_router.delete("/word_types/{word_type_id}/")
 async def delete_word_type(
     word_type_id: uuid.UUID,
     interactive_content_service: InteractiveContentService = Depends(
@@ -619,7 +619,7 @@ async def delete_word_type(
 # Visual Type CRUD endpoints
 
 
-@interactive_content_router.post("/visual_types")
+@interactive_content_router.post("/visual_types/")
 async def create_visual_type(
     visual_type_data: VisualTypeCreateSchema,
     interactive_content_service: InteractiveContentService = Depends(
@@ -650,7 +650,7 @@ async def create_visual_type(
         )
 
 
-@interactive_content_router.put("/visual_types/{visual_type_id}")
+@interactive_content_router.put("/visual_types/{visual_type_id}/")
 async def update_visual_type(
     visual_type_id: uuid.UUID,
     visual_type_update: VisualTypeUpdateSchema,
@@ -682,7 +682,7 @@ async def update_visual_type(
         )
 
 
-@interactive_content_router.delete("/visual_types/{visual_type_id}")
+@interactive_content_router.delete("/visual_types/{visual_type_id}/")
 async def delete_visual_type(
     visual_type_id: uuid.UUID,
     interactive_content_service: InteractiveContentService = Depends(
@@ -714,7 +714,7 @@ async def delete_visual_type(
 # Chart Type CRUD endpoints
 
 
-@interactive_content_router.post("/chart_types")
+@interactive_content_router.post("/chart_types/")
 async def create_chart_type(
     chart_type_data: ChartTypeCreateSchema,
     interactive_content_service: InteractiveContentService = Depends(
@@ -745,7 +745,7 @@ async def create_chart_type(
         )
 
 
-@interactive_content_router.put("/chart_types/{chart_type_id}")
+@interactive_content_router.put("/chart_types/{chart_type_id}/")
 async def update_chart_type(
     chart_type_id: uuid.UUID,
     chart_type_update: ChartTypeUpdateSchema,
@@ -777,7 +777,7 @@ async def update_chart_type(
         )
 
 
-@interactive_content_router.delete("/chart_types/{chart_type_id}")
+@interactive_content_router.delete("/chart_types/{chart_type_id}/")
 async def delete_chart_type(
     chart_type_id: uuid.UUID,
     interactive_content_service: InteractiveContentService = Depends(

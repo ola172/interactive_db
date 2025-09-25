@@ -56,7 +56,7 @@ async def create_interactive_course(
         )
 
 
-@interactive_course_router.get("/all")
+@interactive_course_router.get("/all/")
 async def get_all_interactive_courses(
     page: int = Query(1, ge=1),
     limit: int = Query(10, ge=1, le=100),
@@ -90,7 +90,7 @@ async def get_all_interactive_courses(
         )
 
 
-@interactive_course_router.get("/{product_id}")
+@interactive_course_router.get("/{product_id}/")
 async def get_interactive_course_by_id(
     product_id: uuid.UUID,
     interactive_course_service: InteractiveCourseService = Depends(
@@ -123,7 +123,7 @@ async def get_interactive_course_by_id(
         )
 
 
-@interactive_course_router.put("/{product_id}")
+@interactive_course_router.put("/{product_id}/")
 async def update_interactive_course(
     product_id: uuid.UUID,
     course_update: InteractiveCourseUpdateSchema,
@@ -158,7 +158,7 @@ async def update_interactive_course(
         )
 
 
-@interactive_course_router.delete("/{product_id}")
+@interactive_course_router.delete("/{product_id}/")
 async def delete_interactive_course(
     product_id: uuid.UUID,
     interactive_course_service: InteractiveCourseService = Depends(
@@ -195,7 +195,7 @@ async def delete_interactive_course(
 # Chapter Endpoints
 
 
-@interactive_course_router.get("/{course_id}/chapters")
+@interactive_course_router.get("/{course_id}/chapters/")
 async def get_chapters_by_course(
     course_id: uuid.UUID,
     interactive_course_service: InteractiveCourseService = Depends(
@@ -228,7 +228,7 @@ async def get_chapters_by_course(
         )
 
 
-@interactive_course_router.post("/chapters")
+@interactive_course_router.post("/chapters/")
 async def create_chapter(
     chapter_data: InteractiveChapterCreateSchema,
     interactive_course_service: InteractiveCourseService = Depends(
@@ -257,7 +257,7 @@ async def create_chapter(
         )
 
 
-@interactive_course_router.put("/chapters/{chapter_id}")
+@interactive_course_router.put("/chapters/{chapter_id}/")
 async def update_chapter(
     chapter_id: uuid.UUID,
     chapter_update: InteractiveChapterUpdateSchema,
@@ -289,7 +289,7 @@ async def update_chapter(
         )
 
 
-@interactive_course_router.delete("/chapters/{chapter_id}")
+@interactive_course_router.delete("/chapters/{chapter_id}/")
 async def delete_chapter(
     chapter_id: uuid.UUID,
     interactive_course_service: InteractiveCourseService = Depends(
@@ -321,7 +321,7 @@ async def delete_chapter(
         )
 
 
-@interactive_course_router.get("/chapters/{chapter_id}/videos")
+@interactive_course_router.get("/chapters/{chapter_id}/videos/")
 async def get_videos_by_chapter(
     chapter_id: uuid.UUID,
     interactive_course_service: InteractiveCourseService = Depends(
@@ -355,7 +355,7 @@ async def get_videos_by_chapter(
 # Videos Endpoints
 
 
-@interactive_course_router.post("/videos")
+@interactive_course_router.post("/videos/")
 async def create_video(
     video_data: InteractiveVideoCreateSchema,
     interactive_course_service: InteractiveCourseService = Depends(
@@ -384,7 +384,7 @@ async def create_video(
         )
 
 
-@interactive_course_router.post("/videos/upload")
+@interactive_course_router.post("/videos/upload/")
 async def create_video_with_upload(
     video_file: UploadFile = File(..., description="Video file to upload"),
     chapter_id: uuid.UUID = Form(..., description="Chapter ID this video belongs to"),
@@ -466,7 +466,7 @@ async def create_video_with_upload(
         )
 
 
-@interactive_course_router.put("/videos/{video_id}")
+@interactive_course_router.put("/videos/{video_id}/")
 async def update_video(
     video_id: uuid.UUID,
     video_update: InteractiveVideoUpdateSchema,
@@ -496,7 +496,7 @@ async def update_video(
         )
 
 
-@interactive_course_router.delete("/videos/{video_id}")
+@interactive_course_router.delete("/videos/{video_id}/")
 async def delete_video(
     video_id: uuid.UUID,
     interactive_course_service: InteractiveCourseService = Depends(
@@ -528,7 +528,7 @@ async def delete_video(
         )
 
 
-@interactive_course_router.get("/videos/{video_id}")
+@interactive_course_router.get("/videos/{video_id}/")
 async def get_video_with_paragraphs(
     video_id: uuid.UUID,
     interactive_course_service: InteractiveCourseService = Depends(
@@ -561,7 +561,7 @@ async def get_video_with_paragraphs(
         )
 
 
-@interactive_course_router.put("/videos/{video_id}/keyword-styles")
+@interactive_course_router.put("/videos/{video_id}/keyword-styles/")
 async def update_video_keyword_styles(
     video_id: uuid.UUID,
     keyword_styles: str = Form(..., description="JSON string of keyword styles to update"),
