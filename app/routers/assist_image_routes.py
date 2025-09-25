@@ -10,7 +10,7 @@ from app.schemas.interactive_schemas.interactive_request_schemas import (
     FileImageTypeEnum,
 )
 from app.services.assist_image_service import AssistImageService
-from app.models.interactive_models.assist_image_model import AssistImageTypeEnum, ImageTypeEnum
+from app.models.interactive_models.assist_image_model import AssistImageTypeEnum
 
 assist_image_router = APIRouter(
     prefix="/assist-images", tags=["Assist Images"]
@@ -128,7 +128,7 @@ async def get_images_by_file(
 @assist_image_router.get("file/{file_id}/type/{image_type}/")
 async def get_images_by_type(
     image_type: AssistImageTypeEnum,
-    file_id: Optional[uuid.UUID] = Query(None),
+    file_id: Optional[uuid.UUID],
     image_service: AssistImageService = Depends(get_assist_image_service),
 ):
     """
@@ -155,7 +155,7 @@ async def get_images_by_type(
 
 @assist_image_router.get("file/{file_id}/protected/")
 async def get_protected_images(
-    file_id: Optional[uuid.UUID] = Query(None),
+    file_id: Optional[uuid.UUID],
     image_service: AssistImageService = Depends(get_assist_image_service),
 ):
     """
