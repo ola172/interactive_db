@@ -10,7 +10,7 @@ from app.repositories.base_repo import BaseRepository
 from app.exceptions.repo_exception import RepoException
 
 
-class ImageRepository(BaseRepository[AssistImageModel]):
+class AssistImageRepository(BaseRepository[AssistImageModel]):
     def __init__(self, db: AsyncSession):
         super().__init__(AssistImageModel, db)
 

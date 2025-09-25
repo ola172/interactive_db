@@ -10,7 +10,7 @@ from app.repositories.base_repo import BaseRepository
 from app.exceptions.repo_exception import RepoException
 
 
-class FileRepository(BaseRepository[AssistFileModel]):
+class AssistFileRepository(BaseRepository[AssistFileModel]):
     def __init__(self, db: AsyncSession):
         super().__init__(AssistFileModel, db)
 

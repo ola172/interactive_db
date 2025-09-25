@@ -5,7 +5,7 @@ from fastapi import UploadFile
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.constant_manager import StorageBucket
-from app.repositories.interactive_repositories.image_repository import ImageRepository
+from app.repositories.interactive_repositories.assist_image_repository import AssistImageRepository
 from app.models.interactive_models.assist_image_model import AssistImageModel, AssistImageTypeEnum
 from app.schemas.interactive_schemas.interactive_request_schemas import (
     ImageCreateSchema,
@@ -19,7 +19,7 @@ class AssistImageService:
     def __init__(
         self,
         db: AsyncSession,
-        image_repo: ImageRepository,
+        image_repo: AssistImageRepository,
         storage_service: StorageService,
     ):
         self.db = db

@@ -23,7 +23,7 @@ from app.repositories.interactive_repositories import (
     ChartTypeRepository,
     ImageRepository,
 )
-from app.repositories.interactive_repositories.file_repository import FileRepository
+from app.repositories.interactive_repositories.assist_file_repository import AssistFileRepository
 from app.services.storage_service import StorageService
 from app.repositories.product import ProductRepository
 from app.repositories.skill import ProductSkillRepository
@@ -68,7 +68,7 @@ class InteractiveCourseService:
         chart_repo: ChartDataRepository,
         chart_type_repo: ChartTypeRepository,
         image_repo: ImageRepository,
-        file_repo: FileRepository,
+        file_repo: AssistFileRepository,
         storage_service: StorageService,
     ):
         self.db = db
