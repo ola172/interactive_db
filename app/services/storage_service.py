@@ -14,7 +14,7 @@ class StorageService:
 
     def _generate_unique_filename(self, original_filename: str, prefix: str = "") -> str:
         """Generate a unique filename with UUID prefix"""
-        file_extension = os.path.splitext(original_filename)[1]
+        file_extension = original_filename.split(".")[-1]
         unique_id = str(uuid.uuid4())
         processed_original_filename = re.sub(r'[^A-Za-z0-9\s]', '', original_filename)
         if prefix:
