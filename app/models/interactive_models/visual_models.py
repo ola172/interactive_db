@@ -1,8 +1,14 @@
+from enum import Enum
 import uuid
 from sqlalchemy import JSON, UUID, Column, Float, ForeignKey, String, Text
+from sqlalchemy import Enum as SQLEnum
 from sqlalchemy.orm import relationship
 
 from app.core.database import Base
+
+class ImageTypeEnum(str, Enum):
+    TWO_D_IMAGE = "2d_image"
+    THREE_D_IMAGE = "3d_image"
 
 
 class VisualTypeModel(Base):
@@ -13,7 +19,6 @@ class VisualTypeModel(Base):
     description = Column(Text, nullable=True)
 
     visuals = relationship("VisualItemModel", back_populates="visual_type")
-
 
 class ChartTypeModel(Base):
     __tablename__ = "chart_types"
@@ -56,6 +61,7 @@ class ImageModel(Base):
     __tablename__ = "images"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    image_type = Column(SQLEnum(ImageTypeEnum), nullable=False)
     url = Column(Text, nullable=False)
     title = Column(String, nullable=False)
     alt_text = Column(String, nullable=True)
@@ -83,6 +89,7 @@ class VisualItemModel(Base):
     table = relationship("TableDataModel", back_populates="visual_item")
     chart = relationship("ChartDataModel", back_populates="visual_item")
     image = relationship("ImageModel", back_populates="visual_item")
+    assist_image = relationship("AssistImageModel", back_populates="visual_item", uselist=False)
     paragraph = relationship(
         "InteractiveParagraphModel", back_populates="paragraph_visual"
     )

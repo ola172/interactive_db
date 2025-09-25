@@ -10,7 +10,7 @@ from app.schemas.interactive_schemas.interactive_request_schemas import (
     FileImageTypeEnum,
 )
 from app.services.interactive_image_service import InteractiveImageService
-from app.models.interactive_models.image_model import ImageTypeEnum
+from app.models.interactive_models.assist_image_model import AssistImageTypeEnum, ImageTypeEnum
 
 interactive_image_router = APIRouter(
     prefix="/interactive-images", tags=["Interactive Images"]
@@ -27,6 +27,7 @@ async def create_image(
     proposed_image_type: FileImageTypeEnum = Form(...),
     is_protected: bool = Form(False),
     searched_image_url: str = Form(None),
+    image_3d_url: Optional[str] = Form(None),
     description: str = Form(None),
     image_service: InteractiveImageService = Depends(get_interactive_image_service),
 ):
@@ -41,7 +42,8 @@ async def create_image(
             proposed_image_type=proposed_image_type,
             is_protected=is_protected,
             searched_image_url=searched_image_url,
-            description=description
+            description=description,
+            image_3d_url=image_3d_url
         )
         
         result = await image_service.create_image(image_data, image)
@@ -123,9 +125,9 @@ async def get_images_by_file(
         )
 
 
-@interactive_image_router.get("/type/{image_type}")
+@interactive_image_router.get("file/{file_id}/type/{image_type}")
 async def get_images_by_type(
-    image_type: ImageTypeEnum,
+    image_type: AssistImageTypeEnum,
     file_id: Optional[uuid.UUID] = Query(None),
     image_service: InteractiveImageService = Depends(get_interactive_image_service),
 ):
@@ -151,7 +153,7 @@ async def get_images_by_type(
         )
 
 
-@interactive_image_router.get("/protected/")
+@interactive_image_router.get("file/{file_id}/protected/")
 async def get_protected_images(
     file_id: Optional[uuid.UUID] = Query(None),
     image_service: InteractiveImageService = Depends(get_interactive_image_service),

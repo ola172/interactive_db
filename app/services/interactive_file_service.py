@@ -1,4 +1,4 @@
-from typing import List, Optional, Dict, Any
+from typing import List, Optional
 from uuid import UUID
 
 from fastapi import UploadFile
@@ -7,15 +7,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.constant_manager import StorageBucket
 from app.repositories.interactive_repositories.file_repository import FileRepository, FileTypeRepository
 from app.repositories.interactive_repositories.image_repository import ImageRepository
-from app.models.interactive_models.files_model import FileModel
-from app.models.interactive_models.file_type_model import FileTypeModel
-from app.models.interactive_models.image_model import AssistImageModel
+from app.models.interactive_models.assist_files_model import AssistFileModel, AssistFileTypeModel
 from app.schemas.interactive_schemas.interactive_request_schemas import (
     FileCreateSchema,
     FileUpdateSchema,
     FileTypeCreateSchema,
-    ImageCreateSchema,
-    ImageUpdateSchema,
 )
 from app.services.interactive_file_storage_service import InteractiveFileStorageService
 from app.exceptions.service_exception import ServiceException
@@ -36,7 +32,7 @@ class InteractiveFileService:
         self.image_repo = image_repo
         self.storage_service = storage_service
 
-    async def create_file(self, file_data: FileCreateSchema, uploaded_file: UploadFile) -> FileModel:
+    async def create_file(self, file_data: FileCreateSchema, uploaded_file: UploadFile) -> AssistFileModel:
         try:
             # Upload file to storage
             storage_path, file_url, original_filename = await self.storage_service.upload_file(
@@ -70,7 +66,7 @@ class InteractiveFileService:
                 },
             )
 
-    async def get_file(self, file_id: UUID) -> Optional[FileModel]:
+    async def get_file(self, file_id: UUID) -> Optional[AssistFileModel]:
         try:
             return await self.file_repo.get_file_with_images(file_id)
         except Exception as e:
@@ -80,7 +76,7 @@ class InteractiveFileService:
                 additional_info={"error": str(e), "file_id": str(file_id)},
             )
 
-    async def get_files_by_video(self, video_id: UUID) -> List[FileModel]:
+    async def get_files_by_video(self, video_id: UUID) -> List[AssistFileModel]:
         try:
             return await self.file_repo.get_files_by_video_id(video_id)
         except Exception as e:
@@ -90,7 +86,7 @@ class InteractiveFileService:
                 additional_info={"error": str(e), "video_id": str(video_id)},
             )
 
-    async def update_file(self, file_id: UUID, file_data: FileUpdateSchema) -> Optional[FileModel]:
+    async def update_file(self, file_id: UUID, file_data: FileUpdateSchema) -> Optional[AssistFileModel]:
         try:
             file_dict = file_data.model_dump(exclude_unset=True)
             if not file_dict:
@@ -136,7 +132,7 @@ class InteractiveFileService:
                 additional_info={"error": str(e), "file_id": str(file_id)},
             )
 
-    async def create_file_type(self, file_type_data: FileTypeCreateSchema) -> FileTypeModel:
+    async def create_file_type(self, file_type_data: FileTypeCreateSchema) -> AssistFileTypeModel:
         try:
             file_type_dict = file_type_data.model_dump()
             file_type = await self.file_type_repo.create(file_type_dict)
@@ -150,7 +146,7 @@ class InteractiveFileService:
                 additional_info={"error": str(e), "file_type_data": file_type_data.model_dump()},
             )
 
-    async def get_file_type_by_name(self, name: str) -> Optional[FileTypeModel]:
+    async def get_file_type_by_name(self, name: str) -> Optional[AssistFileTypeModel]:
         try:
             return await self.file_type_repo.get_by_name(name)
         except Exception as e:
@@ -160,7 +156,7 @@ class InteractiveFileService:
                 additional_info={"error": str(e), "name": name},
             )
 
-    async def get_all_file_types(self) -> List[FileTypeModel]:
+    async def get_all_file_types(self) -> List[AssistFileTypeModel]:
         try:
             return await self.file_type_repo.get_all()
         except Exception as e:

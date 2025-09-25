@@ -5,7 +5,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from app.models.interactive_models.image_model import AssistImageModel, AssistImageTypeEnum
+from app.models.interactive_models.assist_image_model import AssistImageModel, AssistImageTypeEnum
 from app.repositories.base_repo import BaseRepository
 from app.exceptions.repo_exception import RepoException
 

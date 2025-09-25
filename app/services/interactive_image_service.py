@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.constant_manager import StorageBucket
 from app.repositories.interactive_repositories.image_repository import ImageRepository
-from app.models.interactive_models.image_model import AssistImageModel, AssistImageTypeEnum
+from app.models.interactive_models.assist_image_model import AssistImageModel, AssistImageTypeEnum
 from app.schemas.interactive_schemas.interactive_request_schemas import (
     ImageCreateSchema,
     ImageUpdateSchema,
@@ -45,7 +45,8 @@ class InteractiveImageService:
                 "searched_image_url": image_data.searched_image_url,
                 "description": image_data.description,
                 "bucket_name": StorageBucket.INTERACTIVE_BUCKET,
-                "storage_path": storage_path
+                "storage_path": storage_path,
+                "image_3d_url": image_data.image_3d_url
             }
             
             image = await self.image_repo.create(image_dict)
