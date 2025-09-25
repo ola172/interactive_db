@@ -7,7 +7,6 @@ from app.exceptions.custom_exception import CustomHTTPException, CustomException
 from app.schemas.interactive_schemas.interactive_request_schemas import (
     ImageCreateSchema,
     ImageUpdateSchema,
-    FileImageTypeEnum,
 )
 from app.services.assist_image_service import AssistImageService
 from app.models.interactive_models.assist_image_model import AssistImageTypeEnum
@@ -24,7 +23,7 @@ async def create_image(
     image: UploadFile = File(...),
     file_id: uuid.UUID = Form(...),
     image_title: str = Form(...),
-    proposed_image_type: FileImageTypeEnum = Form(...),
+    proposed_image_type: AssistImageTypeEnum = Form(...),
     is_protected: bool = Form(False),
     searched_image_url: str = Form(None),
     image_3d_url: Optional[str] = Form(None),

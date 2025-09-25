@@ -5,6 +5,7 @@ from enum import Enum
 
 # Import ImageTypeEnum from visual models
 from app.models.interactive_models.visual_models import ImageTypeEnum
+from app.models.interactive_models.assist_image_model import AssistImageTypeEnum
 
 
 class VisualTypeEnum(str, Enum):
@@ -228,14 +229,6 @@ class InteractiveCourseUpdateSchema(BaseModel):
     objectives: Optional[List[uuid.UUID]] = Field(default=None)
 
 
-# File and Image Request Schemas
-class FileImageTypeEnum(str, Enum):
-    TWO_D_IMAGE = "2d_image"
-    THREE_D_IMAGE = "3d_image"
-    CHART = "chart"
-    TABLE = "table"
-
-
 class FileCreateSchema(BaseModel):
     video_id: Optional[uuid.UUID] = Field(default=None)
     file_type_id: uuid.UUID
@@ -253,7 +246,7 @@ class FileUpdateSchema(BaseModel):
 class ImageCreateSchema(BaseModel):
     file_id: uuid.UUID
     image_title: str
-    proposed_image_type: FileImageTypeEnum
+    proposed_image_type: AssistImageTypeEnum
     is_protected: bool = False
     searched_image_url: Optional[str] = Field(default=None)
     image_3d_url: Optional[str] = Field(default=None)
@@ -262,7 +255,7 @@ class ImageCreateSchema(BaseModel):
 
 class ImageUpdateSchema(BaseModel):
     image_title: Optional[str] = Field(default=None)
-    proposed_image_type: Optional[FileImageTypeEnum] = Field(default=None)
+    proposed_image_type: Optional[AssistImageTypeEnum] = Field(default=None)
     is_protected: Optional[bool] = Field(default=None)
     original_image_url: Optional[str] = Field(default=None)
     searched_image_url: Optional[str] = Field(default=None)
