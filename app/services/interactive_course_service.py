@@ -24,7 +24,7 @@ from app.repositories.interactive_repositories import (
     ImageRepository,
 )
 from app.repositories.interactive_repositories.file_repository import FileRepository
-from app.services.interactive_file_storage_service import InteractiveFileStorageService
+from app.services.storage_service import StorageService
 from app.repositories.product import ProductRepository
 from app.repositories.skill import ProductSkillRepository
 from app.repositories import ProductObjectiveRepository
@@ -69,7 +69,7 @@ class InteractiveCourseService:
         chart_type_repo: ChartTypeRepository,
         image_repo: ImageRepository,
         file_repo: FileRepository,
-        storage_service: InteractiveFileStorageService,
+        storage_service: StorageService,
     ):
         self.db = db
         self.course_detail_repo = course_detail_repo

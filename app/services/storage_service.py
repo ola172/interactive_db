@@ -8,7 +8,7 @@ from app.core.storage import StorageClient
 from app.exceptions.service_exception import ServiceException
 
 
-class InteractiveFileStorageService:
+class StorageService:
     def __init__(self, storage_client: StorageClient):
         self.storage_client = storage_client
 

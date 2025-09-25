@@ -32,4 +32,4 @@ class InteractiveVideoModel(Base):
         cascade="all, delete-orphan",
     )
     type_styles = relationship("VideoKeywordTypeStyleModel", back_populates="video")
-    files = relationship("FileModel", back_populates="video")
+    files = relationship("AssistFileModel", back_populates="video")

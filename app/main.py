@@ -12,7 +12,8 @@ from app.routers.product_routes import product_router
 from app.routers.user_routes import router as user_router
 from app.routers.interactive_course_routes import interactive_course_router
 from app.routers.interactive_content_routes import interactive_content_router
-from app.routers.interactive_file_routes import interactive_file_router
+from app.routers.assist_file_routes import assist_file_router
+from app.routers.assist_image_routes import assist_image_router
 
 app = FastAPI(title="Zedny API")
 
@@ -70,7 +71,8 @@ app.include_router(user_router)
 app.include_router(pathway_router)
 app.include_router(interactive_course_router)
 app.include_router(interactive_content_router)
-app.include_router(interactive_file_router)
+app.include_router(assist_file_router)
+app.include_router(assist_image_router)
 
 # ✅ Initialize DB
 db = Database()

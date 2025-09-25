@@ -46,9 +46,9 @@ from app.services.pathway_service import PathwayService
 from app.services.user_service import UserService
 from app.services.interactive_course_service import InteractiveCourseService
 from app.services.interactive_content_service import InteractiveContentService
-from app.services.interactive_file_service import InteractiveFileService
-from app.services.interactive_image_service import InteractiveImageService
-from app.services.interactive_file_storage_service import InteractiveFileStorageService
+from app.services.assist_file_service import AssistFileService
+from app.services.assist_image_service import AssistImageService
+from app.services.storage_service import StorageService
 from app.core.storage import StorageClient
 
 db = Database()
@@ -427,10 +427,10 @@ async def get_book_video_service(
     )
 
 
-async def get_file_storage_service(
+async def get_storage_service(
         storage_client: StorageClient = Depends(get_storage_client),
-) -> AsyncGenerator[InteractiveFileStorageService, Any]:
-    yield InteractiveFileStorageService(storage_client=storage_client)
+) -> AsyncGenerator[StorageService, Any]:
+    yield StorageService(storage_client=storage_client)
 
 
 
@@ -453,7 +453,7 @@ async def get_interactive_course_service(
         image_repo: ImageRepository = Depends(get_image_repository),
         chart_type_repo: ChartTypeRepository = Depends(get_chart_type_repo),
         file_repo: FileRepository = Depends(get_file_repository),
-        storage_service: InteractiveFileStorageService = Depends(get_file_storage_service),
+        storage_service: StorageService = Depends(get_storage_service),
 ) -> AsyncGenerator["InteractiveCourseService", Any]:
     yield InteractiveCourseService(
         db=course_detail_repo.db,
@@ -508,13 +508,13 @@ async def get_interactive_content_service(
     )
 
 
-async def get_interactive_file_service(
+async def get_assist_file_service(
         file_repo: FileRepository = Depends(get_file_repository),
         file_type_repo: FileTypeRepository = Depends(get_file_type_repository),
         image_repo: FileImageRepository = Depends(get_file_image_repository),
-        storage_service: InteractiveFileStorageService = Depends(get_file_storage_service),
-) -> AsyncGenerator["InteractiveFileService", Any]:
-    yield InteractiveFileService(
+        storage_service: StorageService = Depends(get_storage_service),
+) -> AsyncGenerator["AssistFileService", Any]:
+    yield AssistFileService(
         db=file_repo.db,
         file_repo=file_repo,
         file_type_repo=file_type_repo,
@@ -523,11 +523,11 @@ async def get_interactive_file_service(
     )
 
 
-async def get_interactive_image_service(
+async def get_assist_image_service(
         image_repo: FileImageRepository = Depends(get_file_image_repository),
-        storage_service: InteractiveFileStorageService = Depends(get_file_storage_service),
-) -> AsyncGenerator["InteractiveImageService", Any]:
-    yield InteractiveImageService(
+        storage_service: StorageService = Depends(get_storage_service),
+) -> AsyncGenerator["AssistImageService", Any]:
+    yield AssistImageService(
         db=image_repo.db,
         image_repo=image_repo,
         storage_service=storage_service,

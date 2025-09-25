@@ -1,25 +1,25 @@
 import uuid
-from typing import List, Optional
+from typing import Optional
 from fastapi import APIRouter, Depends, Query, UploadFile, File, Form
 
-from app.container import get_interactive_image_service
+from app.container import get_assist_image_service
 from app.exceptions.custom_exception import CustomHTTPException, CustomException
 from app.schemas.interactive_schemas.interactive_request_schemas import (
     ImageCreateSchema,
     ImageUpdateSchema,
     FileImageTypeEnum,
 )
-from app.services.interactive_image_service import InteractiveImageService
+from app.services.assist_image_service import AssistImageService
 from app.models.interactive_models.assist_image_model import AssistImageTypeEnum, ImageTypeEnum
 
-interactive_image_router = APIRouter(
-    prefix="/interactive-images", tags=["Interactive Images"]
+assist_image_router = APIRouter(
+    prefix="/assist-images", tags=["Assist Images"]
 )
 
 
 # Image Endpoints
 
-@interactive_image_router.post("/")
+@assist_image_router.post("/")
 async def create_image(
     image: UploadFile = File(...),
     file_id: uuid.UUID = Form(...),
@@ -29,7 +29,7 @@ async def create_image(
     searched_image_url: str = Form(None),
     image_3d_url: Optional[str] = Form(None),
     description: str = Form(None),
-    image_service: InteractiveImageService = Depends(get_interactive_image_service),
+    image_service: AssistImageService = Depends(get_assist_image_service),
 ):
     """
     Create a new image with upload.
@@ -64,10 +64,10 @@ async def create_image(
         )
 
 
-@interactive_image_router.get("/{image_id}")
+@assist_image_router.get("/{image_id}/")
 async def get_image(
     image_id: uuid.UUID,
-    image_service: InteractiveImageService = Depends(get_interactive_image_service),
+    image_service: AssistImageService = Depends(get_assist_image_service),
 ):
     """
     Get an image by ID.
@@ -98,10 +98,10 @@ async def get_image(
         )
 
 
-@interactive_image_router.get("/file/{file_id}")
+@assist_image_router.get("/file/{file_id}/")
 async def get_images_by_file(
     file_id: uuid.UUID,
-    image_service: InteractiveImageService = Depends(get_interactive_image_service),
+    image_service: AssistImageService = Depends(get_assist_image_service),
 ):
     """
     Get all images for a specific file.
@@ -125,11 +125,11 @@ async def get_images_by_file(
         )
 
 
-@interactive_image_router.get("file/{file_id}/type/{image_type}")
+@assist_image_router.get("file/{file_id}/type/{image_type}/")
 async def get_images_by_type(
     image_type: AssistImageTypeEnum,
     file_id: Optional[uuid.UUID] = Query(None),
-    image_service: InteractiveImageService = Depends(get_interactive_image_service),
+    image_service: AssistImageService = Depends(get_assist_image_service),
 ):
     """
     Get images by type, optionally filtered by file ID.
@@ -153,10 +153,10 @@ async def get_images_by_type(
         )
 
 
-@interactive_image_router.get("file/{file_id}/protected/")
+@assist_image_router.get("file/{file_id}/protected/")
 async def get_protected_images(
     file_id: Optional[uuid.UUID] = Query(None),
-    image_service: InteractiveImageService = Depends(get_interactive_image_service),
+    image_service: AssistImageService = Depends(get_assist_image_service),
 ):
     """
     Get protected images, optionally filtered by file ID.
@@ -180,11 +180,11 @@ async def get_protected_images(
         )
 
 
-@interactive_image_router.put("/{image_id}")
+@assist_image_router.put("/{image_id}/")
 async def update_image(
     image_id: uuid.UUID,
     image_request: ImageUpdateSchema,
-    image_service: InteractiveImageService = Depends(get_interactive_image_service),
+    image_service: AssistImageService = Depends(get_assist_image_service),
 ):
     """
     Update an image.
@@ -215,10 +215,10 @@ async def update_image(
         )
 
 
-@interactive_image_router.delete("/{image_id}")
+@assist_image_router.delete("/{image_id}/")
 async def delete_image(
     image_id: uuid.UUID,
-    image_service: InteractiveImageService = Depends(get_interactive_image_service),
+    image_service: AssistImageService = Depends(get_assist_image_service),
 ):
     """
     Delete an image.

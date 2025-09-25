@@ -11,16 +11,16 @@ from app.schemas.interactive_schemas.interactive_request_schemas import (
     ImageCreateSchema,
     ImageUpdateSchema,
 )
-from app.services.interactive_file_storage_service import InteractiveFileStorageService
+from app.services.storage_service import StorageService
 from app.exceptions.service_exception import ServiceException
 
 
-class InteractiveImageService:
+class AssistImageService:
     def __init__(
         self,
         db: AsyncSession,
         image_repo: ImageRepository,
-        storage_service: InteractiveFileStorageService,
+        storage_service: StorageService,
     ):
         self.db = db
         self.image_repo = image_repo

@@ -13,18 +13,18 @@ from app.schemas.interactive_schemas.interactive_request_schemas import (
     FileUpdateSchema,
     FileTypeCreateSchema,
 )
-from app.services.interactive_file_storage_service import InteractiveFileStorageService
+from app.services.storage_service import StorageService
 from app.exceptions.service_exception import ServiceException
 
 
-class InteractiveFileService:
+class AssistFileService:
     def __init__(
         self,
         db: AsyncSession,
         file_repo: FileRepository,
         file_type_repo: FileTypeRepository,
         image_repo: ImageRepository,
-        storage_service: InteractiveFileStorageService,
+        storage_service: StorageService,
     ):
         self.db = db
         self.file_repo = file_repo
