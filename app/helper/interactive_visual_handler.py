@@ -99,9 +99,10 @@ class ImageDataHandler(VisualDataHandler):
 
     async def create(self, data: Dict[str, Any], repos: Dict[str, Any]) -> uuid.UUID:
         image_dict = {
+            "image_type": data.get("image_type"),
             "url": data.get("url", ""),
+            "title": data.get("title", ""),
             "alt_text": data.get("alt_text"),
-            "title": data.get("caption", ""),
         }
         image = await repos["image_repo"].create(image_dict)
         return image.id
@@ -110,9 +111,10 @@ class ImageDataHandler(VisualDataHandler):
         self, item_id: uuid.UUID, data: Dict[str, Any], repos: Dict[str, Any]
     ) -> bool:
         image_update_data = {
+            "image_type": data.get("image_type"),
             "url": data.get("url"),
+            "title": data.get("title"),
             "alt_text": data.get("alt_text"),
-            "title": data.get("caption"),
         }
         # Remove None values
         image_update_data = {

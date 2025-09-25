@@ -3,6 +3,9 @@ from typing import List, Optional
 from pydantic import BaseModel, Field
 from enum import Enum
 
+# Import ImageTypeEnum from visual models
+from app.models.interactive_models.visual_models import ImageTypeEnum
+
 
 class VisualTypeEnum(str, Enum):
     CHART = "chart"
@@ -100,9 +103,10 @@ class ChartDataCreateSchema(BaseModel):
 
 
 class ImageDataCreateSchema(BaseModel):
+    image_type: ImageTypeEnum = Field(..., description="Type of image (2D or 3D)")
     url: str
+    title: str = Field(..., description="Image title")
     alt_text: Optional[str] = Field(default=None)
-    caption: Optional[str] = Field(default=None)
 
 
 class VisualDataCreateSchema(BaseModel):

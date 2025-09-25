@@ -2,6 +2,7 @@ import uuid
 from typing import List, Optional
 from pydantic import BaseModel, Field
 from .interactive_request_schemas import VisualTypeEnum, ChartTypeEnum
+from app.models.interactive_models.visual_models import ImageTypeEnum
 
 
 # Word and Keyword Response Schemas
@@ -86,9 +87,10 @@ class ChartDataResponse(BaseModel):
 
 class ImageDataResponse(BaseModel):
     id: uuid.UUID
+    image_type: ImageTypeEnum
     url: str
+    title: str
     alt_text: Optional[str] = Field(default=None)
-    caption: Optional[str] = Field(default=None)
 
     class Config:
         from_attributes = True
