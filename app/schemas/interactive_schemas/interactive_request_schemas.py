@@ -111,6 +111,7 @@ class VisualDataCreateSchema(BaseModel):
     table_data: Optional[TableDataCreateSchema] = Field(default=None)
     chart_data: Optional[ChartDataCreateSchema] = Field(default=None)
     image_data: Optional[ImageDataCreateSchema] = Field(default=None)
+    assist_image_id: Optional[uuid.UUID] = Field(default=None, description="ID of existing assist image to link to this visual item")
 
 
 class VisualDataUpdateSchema(BaseModel):
@@ -119,6 +120,7 @@ class VisualDataUpdateSchema(BaseModel):
     table_data: Optional[TableDataCreateSchema] = Field(default=None)
     chart_data: Optional[ChartDataCreateSchema] = Field(default=None)
     image_data: Optional[ImageDataCreateSchema] = Field(default=None)
+    assist_image_id: Optional[uuid.UUID] = Field(default=None, description="ID of existing assist image to link to this visual item")
 
 
 # Paragraph Request Schemas
@@ -250,6 +252,7 @@ class ImageCreateSchema(BaseModel):
     proposed_image_type: FileImageTypeEnum
     is_protected: bool = False
     searched_image_url: Optional[str] = Field(default=None)
+    image_3d_url: Optional[str] = Field(default=None)
     description: Optional[str] = Field(default=None)
 
 
@@ -259,6 +262,7 @@ class ImageUpdateSchema(BaseModel):
     is_protected: Optional[bool] = Field(default=None)
     original_image_url: Optional[str] = Field(default=None)
     searched_image_url: Optional[str] = Field(default=None)
+    image_3d_url: Optional[str] = Field(default=None)
     description: Optional[str] = Field(default=None)
 
 

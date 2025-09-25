@@ -292,6 +292,12 @@ class InteractiveContentService:
                 }
                 visual_item = await self.visual_repo.create(visual_dict)
 
+                # Link assist image if provided
+                if visual_data.assist_image_id:
+                    await self._link_assist_image_to_visual_item(
+                        visual_data.assist_image_id, visual_item.id
+                    )
+
                 await self.db.flush()
                 return {
                     "id": visual_item.id,
@@ -301,6 +307,7 @@ class InteractiveContentService:
                     "table_id": visual_item.table_id,
                     "chart_id": visual_item.chart_id,
                     "image_id": visual_item.image_id,
+                    "assist_image_id": getattr(visual_item, 'assist_image_id', None) if hasattr(visual_item, 'assist_image') and visual_item.assist_image else None,
                 }
         except CustomException as e:
             raise e
@@ -391,6 +398,20 @@ class InteractiveContentService:
                         repos,
                     )
 
+                # Handle assist image linking/unlinking
+                if visual_update.assist_image_id is not None:
+                    # First, unlink any existing assist image
+                    if hasattr(visual_item, 'assist_image') and visual_item.assist_image:
+                        await self.unlink_assist_image_from_visual_item(
+                            visual_item.assist_image.id
+                        )
+                    
+                    # Link new assist image if provided
+                    if visual_update.assist_image_id:
+                        await self._link_assist_image_to_visual_item(
+                            visual_update.assist_image_id, visual_item.id
+                        )
+
                 await self.db.flush()
                 return {
                     "id": visual_item.id,
@@ -400,6 +421,7 @@ class InteractiveContentService:
                     "table_id": visual_item.table_id,
                     "chart_id": visual_item.chart_id,
                     "image_id": visual_item.image_id,
+                    "assist_image_id": getattr(visual_item, 'assist_image_id', None) if hasattr(visual_item, 'assist_image') and visual_item.assist_image else None,
                 }
         except CustomException as e:
             raise e
@@ -989,6 +1011,7 @@ class InteractiveContentService:
                 "table_id": visual_item.table_id,
                 "chart_id": visual_item.chart_id,
                 "image_id": visual_item.image_id,
+                "assist_image_id": visual_item.assist_image_id,
                 "data": (
                     specific_data.__dict__
                     if hasattr(specific_data, "__dict__")
@@ -1053,6 +1076,7 @@ class InteractiveContentService:
                         "table_id": visual_item.table_id,
                         "chart_id": visual_item.chart_id,
                         "image_id": visual_item.image_id,
+                        "assist_image_id": visual_item.assist_image_id,
                         "data": (
                             specific_data.__dict__
                             if hasattr(specific_data, "__dict__")
@@ -1073,4 +1097,87 @@ class InteractiveContentService:
                     "error": str(e),
                     "visual_type_id": str(visual_type_id),
                 },
+            )
+
+    async def _link_assist_image_to_visual_item(
+        self, assist_image_id: uuid.UUID, visual_item_id: uuid.UUID
+    ) -> None:
+        """Helper method to link an assist image to a visual item."""
+        try:
+            from app.models.interactive_models.assist_image_model import AssistImageModel
+            from sqlalchemy import update
+
+            # Update the assist image to link to the visual item
+            stmt = (
+                update(AssistImageModel)
+                .where(AssistImageModel.id == assist_image_id)
+                .values(visual_item_id=visual_item_id)
+            )
+            await self.db.execute(stmt)
+
+        except Exception as e:
+            raise ServiceException(
+                status_code=500,
+                detail="Failed to link assist image to visual item",
+                additional_info={
+                    "error": str(e),
+                    "assist_image_id": str(assist_image_id),
+                    "visual_item_id": str(visual_item_id),
+                },
+            )
+
+    async def unlink_assist_image_from_visual_item(
+        self, assist_image_id: uuid.UUID
+    ) -> bool:
+        """Unlink an assist image from its visual item (set visual_item_id to None)."""
+        try:
+            from app.models.interactive_models.assist_image_model import AssistImageModel
+            from sqlalchemy import update
+
+            stmt = (
+                update(AssistImageModel)
+                .where(AssistImageModel.id == assist_image_id)
+                .values(visual_item_id=None)
+            )
+            result = await self.db.execute(stmt)
+            return result.rowcount > 0
+
+        except Exception as e:
+            raise ServiceException(
+                status_code=500,
+                detail="Failed to unlink assist image from visual item",
+                additional_info={
+                    "error": str(e),
+                    "assist_image_id": str(assist_image_id),
+                },
+            )
+
+    async def get_orphaned_assist_images(self) -> list[dict]:
+        """Get assist images that are not linked to any visual item."""
+        try:
+            from app.models.interactive_models.assist_image_model import AssistImageModel
+            from sqlalchemy import select
+
+            stmt = select(AssistImageModel).where(
+                AssistImageModel.visual_item_id.is_(None)
+            )
+            result = await self.db.execute(stmt)
+            orphaned_images = result.scalars().all()
+
+            return [
+                {
+                    "id": img.id,
+                    "image_title": img.image_title,
+                    "description": img.description,
+                    "created_at": img.created_at,
+                    "file_id": img.file_id,
+                }
+                for img in orphaned_images
+            ]
+
+        except Exception as e:
+            raise ServiceException(
+                status_code=500,
+                detail="Failed to get orphaned assist images",
+                additional_info={"error": str(e)},
             )

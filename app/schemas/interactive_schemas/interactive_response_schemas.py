@@ -102,6 +102,7 @@ class VisualDataResponse(BaseModel):
     table_data: Optional[TableDataResponse] = Field(default=None)
     chart_data: Optional[ChartDataResponse] = Field(default=None)
     image_data: Optional[ImageDataResponse] = Field(default=None)
+    assist_image_id: Optional[uuid.UUID] = Field(default=None, description="ID of linked assist image")
 
     class Config:
         from_attributes = True
