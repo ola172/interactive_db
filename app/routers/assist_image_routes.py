@@ -63,6 +63,41 @@ async def create_image(
         )
 
 
+@assist_image_router.post("/{image_id}/3d-image/")
+async def upload_3d_image(
+    image_id: uuid.UUID,
+    image_3d: UploadFile = File(...),
+    image_service: AssistImageService = Depends(get_assist_image_service),
+):
+    """
+    Upload a 3D image for an existing assist image.
+    """
+    try:
+        result = await image_service.upload_3d_image(image_id, image_3d)
+        if not result:
+            raise CustomHTTPException(
+                status_code=404,
+                detail="Assist image not found",
+                exception_type="NotFound",
+                additional_info={"image_id": str(image_id)},
+            )
+        return result
+    except CustomException as e:
+        raise CustomHTTPException(
+            status_code=e.status_code,
+            detail=e.detail,
+            exception_type=e.exception_type,
+            additional_info=e.additional_info,
+        )
+    except Exception as e:
+        raise CustomHTTPException(
+            status_code=500,
+            detail="Internal server error",
+            exception_type="InternalServerError",
+            additional_info={"error": str(e)},
+        )
+
+
 @assist_image_router.get("/{image_id}/")
 async def get_image(
     image_id: uuid.UUID,

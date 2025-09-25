@@ -10,4 +10,5 @@ class StorageBucket:
     INTERACTIVE_BUCKET: str = "interactive_files"
     VIDEO_FOLDER = "videos"
     ASSIST_FILES_FOLDER: str = "assist_files"
-    IMAGE_FOLDER: str = "images"
+    IMAGE_FOLDER: str = "images/original"
+    IMAGE_3D_FOLDER: str = "images/3d_images"

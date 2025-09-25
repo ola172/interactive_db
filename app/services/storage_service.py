@@ -67,10 +67,10 @@ class StorageService:
         """
         try:
             # Validate image file type
-            if not image.content_type or not image.content_type.startswith('image/'):
+            if not image.content_type or not (image.content_type.startswith('image/') or image.content_type.startswith("application/octet-stream")):
                 raise ServiceException(
                     status_code=400,
-                    detail="Invalid file type. Only images are allowed.",
+                    detail="Invalid file type. Only images or 3d-images are allowed.",
                     additional_info={"content_type": image.content_type},
                 )
             

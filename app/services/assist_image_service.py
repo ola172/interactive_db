@@ -63,6 +63,45 @@ class AssistImageService:
                     "filename": uploaded_image.filename
                 },
             )
+        
+    async def upload_3d_image(self, image_id: UUID, uploaded_3d_image: UploadFile) -> Optional[AssistImageModel]:
+        try:
+            # Check if the assist image exists
+            image = await self.image_repo.get(image_id)
+            if not image:
+                raise ServiceException(
+                    status_code=404,
+                    detail="Assist image not found",
+                    additional_info={"image_id": str(image_id)},
+                )
+            
+            # Upload 3D image to storage in images/3d_images folder
+            storage_path, image_3d_url, original_filename = await self.storage_service.upload_image(
+                image=uploaded_3d_image,
+                bucket_name=StorageBucket.INTERACTIVE_BUCKET,
+                folder_prefix=StorageBucket.IMAGE_3D_FOLDER
+            )
+            
+            # Update the assist image record with the 3D image URL
+            updated_image = await self.image_repo.update(image_id, {"image_3d_url": image_3d_url})
+            if updated_image:
+                await self.db.commit()
+            return updated_image
+            
+        except ServiceException:
+            await self.db.rollback()
+            raise
+        except Exception as e:
+            await self.db.rollback()
+            raise ServiceException(
+                status_code=500,
+                detail="Error uploading 3D image",
+                additional_info={
+                    "error": str(e), 
+                    "image_id": str(image_id),
+                    "filename": uploaded_3d_image.filename
+                },
+            )
 
     async def get_image(self, image_id: UUID) -> Optional[AssistImageModel]:
         try:
