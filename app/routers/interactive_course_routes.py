@@ -1,4 +1,3 @@
-from typing import Optional
 import uuid
 from fastapi import APIRouter, Depends, Query, HTTPException, UploadFile, File, Form
 import json
@@ -12,7 +11,6 @@ from app.schemas.interactive_schemas import (
     InteractiveChapterUpdateSchema,
     InteractiveVideoCreateSchema,
     InteractiveVideoUpdateSchema,
-    InteractiveVideoUploadSchema,
     VideoKeywordStyleUpdateSchema,
 )
 from app.services.interactive_course_service import InteractiveCourseService
@@ -385,27 +383,15 @@ async def create_video(
 
 
 @interactive_course_router.post("/videos/upload/")
-async def create_video_with_upload(
+async def upload_video_file(
     video_file: UploadFile = File(..., description="Video file to upload"),
-    chapter_id: uuid.UUID = Form(..., description="Chapter ID this video belongs to"),
-    quiz_id: Optional[str] = Form(None, description="Optional quiz ID"),
-    title: str = Form(..., description="Video title"),
-    video_duration: str = Form(..., description="Video duration (e.g., '10:30')"),
-    view_index: int = Form(..., description="Display order index"),
-    asset_file_id: Optional[str] = Form(None, description="Asset file ID to update with video reference"),
-    keyword_styles: str = Form("[]", description="JSON string of keyword styles data"),
-    paragraphs: str = Form(..., description="JSON string of paragraphs data"),
     interactive_course_service: InteractiveCourseService = Depends(get_interactive_course_service),
 ):
     """
-    Create a new video with file upload, store video file, and update asset file reference.
-    Includes all fields from regular video creation plus file upload and asset file update.
+    Upload a video file to storage and store file information in file table.
+    Returns the stored file information for use in video creation.
     """
     try:
-        if not asset_file_id or asset_file_id.strip() == '':
-            asset_file_id = None
-        if not quiz_id or quiz_id.strip() == '':
-            quiz_id = None
         # Validate video file type
         if not video_file.content_type or not video_file.content_type.startswith('video/'):
             raise CustomHTTPException(
@@ -415,40 +401,7 @@ async def create_video_with_upload(
                 additional_info={"content_type": video_file.content_type},
             )
         
-        # Parse paragraphs JSON
-        try:
-            paragraphs_data = json.loads(paragraphs)
-        except json.JSONDecodeError as e:
-            raise CustomHTTPException(
-                status_code=400,
-                detail="Invalid paragraphs JSON format",
-                exception_type="ValidationError",
-                additional_info={"json_error": str(e)},
-            )
-        
-        # Parse keyword styles JSON
-        try:
-            keyword_styles_data = json.loads(keyword_styles)
-        except json.JSONDecodeError as e:
-            raise CustomHTTPException(
-                status_code=400,
-                detail="Invalid keyword styles JSON format",
-                exception_type="ValidationError",
-                additional_info={"json_error": str(e)},
-            )
-        # Create schema from form data
-        video_data = InteractiveVideoUploadSchema(
-            chapter_id=chapter_id,
-            quiz_id=quiz_id,
-            title=title,
-            video_duration=video_duration,
-            view_index=view_index,
-            asset_file_id=asset_file_id,
-            keyword_styles=keyword_styles_data,
-            paragraphs=paragraphs_data
-        )
-        
-        result = await interactive_course_service.create_video_with_upload(video_data, video_file)
+        result = await interactive_course_service.upload_video_file(video_file)
         return {"results": result}
     except CustomException as e:
         raise CustomHTTPException(

@@ -453,6 +453,7 @@ async def get_interactive_course_service(
         image_repo: ImageRepository = Depends(get_image_repository),
         chart_type_repo: ChartTypeRepository = Depends(get_chart_type_repo),
         file_repo: AssistFileRepository = Depends(get_file_repository),
+        file_type_repo: FileTypeRepository = Depends(get_file_type_repository),
         storage_service: StorageService = Depends(get_storage_service),
 ) -> AsyncGenerator["InteractiveCourseService", Any]:
     yield InteractiveCourseService(
@@ -475,6 +476,7 @@ async def get_interactive_course_service(
         image_repo=image_repo,
         chart_type_repo=chart_type_repo,
         file_repo=file_repo,
+        file_type_repo=file_type_repo,
         storage_service=storage_service,
     )
 

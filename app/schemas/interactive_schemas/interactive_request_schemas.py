@@ -139,14 +139,27 @@ class InteractiveParagraphCreateSchema(BaseModel):
     visual_data: Optional[VisualDataCreateSchema] = Field(default=None)
 
 
+# Video Keyword Style Schema
+class VideoKeywordStyleCreateSchema(BaseModel):
+    keyword_type_id: uuid.UUID = Field(..., description="Keyword type ID")
+    color_light: str = Field(..., min_length=1, max_length=50, description="Color for light theme (e.g., #000000)")
+    color_dark: str = Field(..., min_length=1, max_length=50, description="Color for dark theme (e.g., #FFFFFF)")
+    shadow_light: Optional[str] = Field(default=None, max_length=50, description="Shadow for light theme")
+    shadow_dark: Optional[str] = Field(default=None, max_length=50, description="Shadow for dark theme")
+    size: int = Field(default=14, ge=8, le=72, description="Font size")
+
+
+
 # Video Request Schemas
 class InteractiveVideoCreateSchema(BaseModel):
     chapter_id: uuid.UUID
     quiz_id: Optional[uuid.UUID] = Field(default=None)
     title: str
-    url: str
     video_duration: str
     view_index: int
+    asset_file_id: Optional[uuid.UUID] = Field(default=None, description="Asset file ID to update with video reference")
+    video_file_id: Optional[uuid.UUID] = Field(default=None, description="Video file ID from uploaded video file")
+    keyword_styles: List[VideoKeywordStyleCreateSchema] = Field(default=[], description="Keyword styles for this video")
     paragraphs: List[InteractiveParagraphCreateSchema] = Field(
         description="All paragraphs data is required"
     )
@@ -268,16 +281,6 @@ class FileTypeCreateSchema(BaseModel):
     description: Optional[str] = Field(default=None)
 
 
-# Video Keyword Style Schema
-class VideoKeywordStyleCreateSchema(BaseModel):
-    keyword_type_id: uuid.UUID = Field(..., description="Keyword type ID")
-    color_light: str = Field(..., min_length=1, max_length=50, description="Color for light theme (e.g., #000000)")
-    color_dark: str = Field(..., min_length=1, max_length=50, description="Color for dark theme (e.g., #FFFFFF)")
-    shadow_light: Optional[str] = Field(default=None, max_length=50, description="Shadow for light theme")
-    shadow_dark: Optional[str] = Field(default=None, max_length=50, description="Shadow for dark theme")
-    size: int = Field(default=14, ge=8, le=72, description="Font size")
-
-
 class VideoKeywordStyleUpdateSchema(BaseModel):
     keyword_type_id: uuid.UUID = Field(..., description="Keyword type ID to update")
     color_light: Optional[str] = Field(default=None, min_length=1, max_length=50, description="Color for light theme")
@@ -286,21 +289,3 @@ class VideoKeywordStyleUpdateSchema(BaseModel):
     shadow_dark: Optional[str] = Field(default=None, max_length=50, description="Shadow for dark theme")
     size: Optional[int] = Field(default=None, ge=8, le=72, description="Font size")
 
-
-# Video Upload Schema with all fields from InteractiveVideoCreateSchema
-class InteractiveVideoUploadSchema(BaseModel):
-    # Core video fields (same as InteractiveVideoCreateSchema)
-    chapter_id: uuid.UUID = Field(..., description="Chapter ID this video belongs to")
-    quiz_id: Optional[uuid.UUID] = Field(default=None, description="Optional quiz ID")
-    title: str = Field(..., min_length=1, max_length=255, description="Video title")
-    video_duration: str = Field(..., description="Video duration (e.g., '10:30')")
-    view_index: int = Field(..., ge=0, description="Display order index")
-    
-    # Paragraphs data (same as create schema)
-    paragraphs: List[InteractiveParagraphCreateSchema] = Field(
-        description="All paragraphs data is required"
-    )
-    
-    # Additional upload-specific fields
-    asset_file_id: Optional[uuid.UUID]= Field(default=None, description="Asset file ID to update with video reference")
-    keyword_styles: List[VideoKeywordStyleCreateSchema] = Field(default=[], description="Keyword styles for this video")

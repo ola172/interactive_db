@@ -16,7 +16,6 @@ from .interactive_request_schemas import (
     # Video request schemas
     InteractiveVideoCreateSchema,
     InteractiveVideoUpdateSchema,
-    InteractiveVideoUploadSchema,
     
     # Paragraph request schemas
     InteractiveParagraphCreateSchema,
@@ -90,7 +89,6 @@ __all__ = [
     "InteractiveVideoUpdateSchema",
     "InteractiveVideoResponse",
     "InteractiveVideoDetails",
-    "InteractiveVideoUploadSchema"
     
     # Paragraph schemas
     "InteractiveParagraphCreateSchema",

@@ -23,7 +23,7 @@ from app.repositories.interactive_repositories import (
     ChartTypeRepository,
     ImageRepository,
 )
-from app.repositories.interactive_repositories.assist_file_repository import AssistFileRepository
+from app.repositories.interactive_repositories.assist_file_repository import AssistFileRepository, FileTypeRepository
 from app.services.storage_service import StorageService
 from app.repositories.product import ProductRepository
 from app.repositories.skill import ProductSkillRepository
@@ -38,7 +38,6 @@ from app.schemas.interactive_schemas import (
     InteractiveChapterUpdateSchema,
     InteractiveVideoCreateSchema,
     InteractiveVideoUpdateSchema,
-    InteractiveVideoUploadSchema,
     VideoKeywordStyleUpdateSchema,
     VideoKeywordTypeStyleUpdateSchema,
     VisualDataCreateSchema,
@@ -69,6 +68,7 @@ class InteractiveCourseService:
         chart_type_repo: ChartTypeRepository,
         image_repo: ImageRepository,
         file_repo: AssistFileRepository,
+        file_type_repo: FileTypeRepository,
         storage_service: StorageService,
     ):
         self.db = db
@@ -90,6 +90,7 @@ class InteractiveCourseService:
         self.chart_type_repo = chart_type_repo
         self.image_repo = image_repo
         self.file_repo = file_repo
+        self.file_type_repo = file_type_repo
         self.storage_service = storage_service
 
         # Initialize visual data registry
@@ -477,36 +478,78 @@ class InteractiveCourseService:
         """
         try:
             async with self.db.begin():
-                # 1. Create video
+                # 1. Get video URL from video_file_id if provided
+                video_url = video_data.url if hasattr(video_data, 'url') and video_data.url else None
+                if video_data.video_file_id:
+                    video_file = await self.file_repo.get(video_data.video_file_id)
+                    if video_file:
+                        video_url = video_file.file_url
+                    else:
+                        raise ServiceException(
+                            status_code=404,
+                            detail="Video file not found",
+                            additional_info={"video_file_id": str(video_data.video_file_id)},
+                        )
+
+                # 2. Create video
                 video_dict = {
                     "chapter_id": video_data.chapter_id,
                     "quiz_id": video_data.quiz_id,
                     "title": video_data.title,
-                    "url": video_data.url,
+                    "url": video_url,
                     "video_duration": video_data.video_duration,
                     "view_index": video_data.view_index,
                 }
                 video = await self.video_repo.create(video_dict)
                 await self.db.flush()
 
-                # 2. Create default keyword type styles for this video
-                # Get all available keyword types and create default styles for each
-                all_keyword_types = await self.keyword_type_repo.get_all(
-                    page=1, limit=1000
-                )
-                for keyword_type in all_keyword_types:
-                    style_dict = {
-                        "video_id": video.id,
-                        "keyword_type_id": keyword_type.id,
-                        "color_light": "#000000",  # Default black for light theme
-                        "color_dark": "#FFFFFF",  # Default white for dark theme
-                        "shadow_light": None,  # No shadow by default
-                        "shadow_dark": None,  # No shadow by default
-                        "size": 14,  # Default font size
-                    }
-                    await self.keyword_style_repo.create(style_dict)
+                # 3. Update file tables with video_id
+                if video_data.asset_file_id:
+                    asset_file = await self.file_repo.get(video_data.asset_file_id)
+                    if asset_file:
+                        await self.file_repo.update(video_data.asset_file_id, {"video_id": video.id})
+                    else:
+                        raise ServiceException(
+                            status_code=404,
+                            detail="Asset file not found",
+                            additional_info={"asset_file_id": str(video_data.asset_file_id)},
+                        )
 
-                # 3. Create paragraphs with their content
+                if video_data.video_file_id:
+                    await self.file_repo.update(video_data.video_file_id, {"video_id": video.id})
+
+                # 4. Create keyword type styles for this video
+                if video_data.keyword_styles:
+                    # Create provided keyword styles
+                    for style_data in video_data.keyword_styles:
+                        style_dict = {
+                            "video_id": video.id,
+                            "keyword_type_id": style_data.keyword_type_id,
+                            "color_light": style_data.color_light,
+                            "color_dark": style_data.color_dark,
+                            "shadow_light": style_data.shadow_light,
+                            "shadow_dark": style_data.shadow_dark,
+                            "size": style_data.size,
+                        }
+                        await self.keyword_style_repo.create(style_dict)
+                else:
+                    # Create default keyword type styles for all available keyword types
+                    all_keyword_types = await self.keyword_type_repo.get_all(
+                        page=1, limit=1000
+                    )
+                    for keyword_type in all_keyword_types:
+                        style_dict = {
+                            "video_id": video.id,
+                            "keyword_type_id": keyword_type.id,
+                            "color_light": "#000000",  # Default black for light theme
+                            "color_dark": "#FFFFFF",  # Default white for dark theme
+                            "shadow_light": None,  # No shadow by default
+                            "shadow_dark": None,  # No shadow by default
+                            "size": 14,  # Default font size
+                        }
+                        await self.keyword_style_repo.create(style_dict)
+
+                # 5. Create paragraphs with their content
                 for paragraph_data in video_data.paragraphs:
                     # Create paragraph
                     paragraph_dict = {
@@ -1026,127 +1069,65 @@ class InteractiveCourseService:
                 additional_info={"error": str(e), "visual_id": str(visual_id)},
             )
 
-    async def create_video_with_upload(
-        self, video_data: InteractiveVideoUploadSchema, video_file: UploadFile
-    ) -> dict:
+    async def upload_video_file(self, video_file: UploadFile) -> dict:
         """
-        Create a new video with file upload, store video file, and update asset file reference.
+        Upload a video file to storage and store file information in file table.
+        Returns the stored file information for use in video creation.
         """
         try:
             async with self.db.begin():
                 # 1. Upload video file to storage
-                storage_path, video_url, _ = await self.storage_service.upload_file(
+                storage_path, video_url, original_filename = await self.storage_service.upload_file(
                     file=video_file,
                     bucket_name=StorageBucket.INTERACTIVE_BUCKET,
                     folder_prefix=StorageBucket.VIDEO_FOLDER
                 )
 
-                # 2. Create video with uploaded URL
-                video_dict = {
-                    "chapter_id": video_data.chapter_id,
-                    "quiz_id": video_data.quiz_id,
-                    "title": video_data.title,
-                    "url": video_url,  # Use uploaded video URL
-                    "video_duration": video_data.video_duration,
-                    "view_index": video_data.view_index,
-                }
-                video = await self.video_repo.create(video_dict)
-                await self.db.flush()
-
-                # 3. Update asset file with video_id
-                if video_data.asset_file_id:
-                    asset_file = await self.file_repo.get(video_data.asset_file_id)
-                    if not asset_file:
-                        raise ServiceException(
-                            status_code=404,
-                            detail="Asset file not found",
-                            additional_info={"asset_file_id": str(video_data.asset_file_id)},
-                        )
-
-                    await self.file_repo.update(video_data.asset_file_id, {"video_id": video.id})
-
-                # 4. Create keyword type styles for this video
-                if video_data.keyword_styles:
-                    # Create provided keyword styles
-                    for style_data in video_data.keyword_styles:
-                        style_dict = {
-                            "video_id": video.id,
-                            "keyword_type_id": style_data.keyword_type_id,
-                            "color_light": style_data.color_light,
-                            "color_dark": style_data.color_dark,
-                            "shadow_light": style_data.shadow_light,
-                            "shadow_dark": style_data.shadow_dark,
-                            "size": style_data.size,
-                        }
-                        await self.keyword_style_repo.create(style_dict)
-                else:
-                    # Create default keyword type styles for all available keyword types
-                    all_keyword_types = await self.keyword_type_repo.get_all(page=1, limit=100)
-                    for keyword_type in all_keyword_types:
-                        style_dict = {
-                            "video_id": video.id,
-                            "keyword_type_id": keyword_type.id,
-                            "color_light": "#000000",
-                            "color_dark": "#FFFFFF", 
-                            "shadow_light": None,
-                            "shadow_dark": None,
-                            "size": 14,
-                        }
-                        await self.keyword_style_repo.create(style_dict)
-
-                # 5. Create paragraphs data (same as regular create_video)
-                for paragraph_data in video_data.paragraphs:
-                    paragraph_dict = {
-                        "video_id": video.id,
-                        "paragraph_text": paragraph_data.paragraph_text,
-                        "start_time": paragraph_data.start_time,
-                        "end_time": paragraph_data.end_time,
-                        "view_index": paragraph_data.view_index,
-                    }
-                    paragraph = await self.paragraph_repo.create(paragraph_dict)
+                # 2. Find or create video file type
+                video_file_types = await self.file_type_repo.get_all(page=1, limit=100)
+                video_file_type = None
+                for file_type in video_file_types:
+                    if file_type.name.lower() == "video":
+                        video_file_type = file_type
+                        break
+                
+                if not video_file_type:
+                    # Create video file type if it doesn't exist
+                    video_file_type = await self.file_type_repo.create({
+                        "name": "video",
+                        "description": "Video files for interactive courses"
+                    })
                     await self.db.flush()
 
-                    # Create words for this paragraph
-                    for word_data in paragraph_data.words:
-                        word_dict = {
-                            "paragraph_id": paragraph.id,
-                            "type_id": word_data.word_type_id,
-                            "word": word_data.word,
-                            "start_time": word_data.start_time,
-                            "end_time": word_data.end_time,
-                        }
-                        await self.word_repo.create(word_dict)
-
-                    # Create keywords for this paragraph
-                    for keyword_data in paragraph_data.keywords:
-                        keyword_dict = {
-                            "paragraph_id": paragraph.id,
-                            "type_id": keyword_data.keyword_type_id,
-                            "word": keyword_data.word,
-                        }
-                        await self.keyword_repo.create(keyword_dict)
-
-                    # Create visual data if provided
-                    if paragraph_data.visual_data:
-                        await self._create_visual_data_with_registry(
-                            paragraph.id, paragraph_data.visual_data
-                        )
-
+                # 3. Create file record in database
+                file_dict = {
+                    "file_name": original_filename,
+                    "video_id": None,  # Will be updated when video is created
+                    "file_type_id": video_file_type.id,
+                    "bucket_name": StorageBucket.INTERACTIVE_BUCKET,
+                    "storage_path": storage_path,
+                    "file_url": video_url
+                }
+                
+                file_record = await self.file_repo.create(file_dict)
                 await self.db.flush()
 
-                return await self.video_repo.get_video_with_paragraphs(
-                    video_id=video.id
-                    )
+                return {
+                    "file_id": file_record.id,
+                    "file_name": file_record.file_name,
+                    "file_url": file_record.file_url,
+                    "storage_path": file_record.storage_path,
+                    "file_type_id": file_record.file_type_id
+                }
 
         except CustomException as e:
             raise e
         except Exception as e:
             raise ServiceException(
                 status_code=500,
-                detail="Failed to create video with upload",
+                detail="Failed to upload video file",
                 additional_info={
                     "error": str(e),
-                    "video_data": str(video_data),
                     "filename": video_file.filename,
                 },
             )
